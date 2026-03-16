@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Under Maintenance</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+/* ANIMATED GREEN BACKGROUND */
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+text-align:center;
+color:white;
+background:linear-gradient(-45deg,#00ff9d,#00c853,#00e676,#00ff9d);
+background-size:400% 400%;
+animation:gradientMove 8s ease infinite;
+}
+
+@keyframes gradientMove{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+/* CONTAINER */
+
+.container{
+background:rgba(0,0,0,0.45);
+padding:50px;
+border-radius:12px;
+max-width:500px;
+}
+
+/* LOGO */
+
+.logo img{
+height:60px;
+margin-bottom:25px;
+}
+
+/* TEXT */
+
+h1{
+font-size:40px;
+margin-bottom:10px;
+}
+
+p{
+color:#d6d6d6;
+margin-bottom:25px;
+line-height:1.6;
+}
+
+/* STATUS */
+
+.status{
+display:inline-block;
+padding:10px 20px;
+background:#00ff9d;
+color:#003b1f;
+border-radius:8px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+<img src="images (6).png" alt="CardNova Logo">
+</div>
+
+<h1>We'll Be Back Soon</h1>
+
+<p>
+Our website is currently undergoing maintenance.  
+We are improving our system and will return shortly.
+</p>
+
+<div class="status">
+Under Maintenance
+</div>
+
+</div>
+
+</body>
+</html>
