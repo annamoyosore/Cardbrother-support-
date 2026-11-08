@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Vault Withdrawal</title>
+
+<style>
+body {
+  background: #07111f;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  background: #122238;
+  padding: 25px;
+  border-radius: 18px;
+}
+
+h2 {
+  color: #00e5a0;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin: 15px 0 8px;
+}
+
+input, select {
+  width: 100%;
+  padding: 14px;
+  border-radius: 9px;
+  border: none;
+  background: #20364e;
+  color: white;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  margin-top: 20px;
+  background: #00d99a;
+  font-weight: bold;
+}
+
+.back {
+  background: #263b54;
+  color: white;
+}
+
+.note {
+  color: #aab9ca;
+  line-height: 1.5;
+  font-size: 13px;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Withdraw to Wallet</h2>
+
+<p>Available balance: <strong id="balance">Loading...</strong></p>
+
+<label>Choose cryptocurrency</label>
+<select id="currency">
+  <option value="BNB">BNB - BNB Smart Chain</option>
+  <option value="ETH">ETH - Ethereum Mainnet</option>
+</select>
+
+<label>Wallet address</label>
+<input
+  type="text"
+  id="wallet"
+  placeholder="Enter your receiving wallet address"
+>
+
+<label>Amount (CVC)</label>
+<input
+  type="number"
+  id="amount"
+  placeholder="Enter CVC amount"
+>
+
+<button id="submitBtn">SUBMIT WITHDRAWAL REQUEST</button>
+
+<p class="note">
+  Withdrawal requests are not yet connected to a live blockchain payout system.
+  Do not submit a request expecting an immediate cryptocurrency transfer.
+</p>
+
+<button class="back" onclick="location.href='crypto.html'">
+  BACK TO DASHBOARD
+</button>
+
+<p id="message"></p>
+
+</div>
+
+<script type="module">
+import {
+  cryptoAction
+} from "./appwrite.js";
+
+async function loadBalance() {
+  try {
+    const result = await cryptoAction("balance");
+
+    document.getElementById("balance").textContent =
+      Number(result.balance).toLocaleString() + " CVC";
+
+  } catch (error) {
+    alert(error.message);
+    location.href = "index.html";
+  }
+}
+
+document.getElementById("submitBtn").onclick = () => {
+  document.getElementById("message").textContent =
+    "Withdrawal requests will be enabled after the secure payout backend is configured.";
+};
+
+loadBalance();
+</script>
+
+</body>
+</html>
