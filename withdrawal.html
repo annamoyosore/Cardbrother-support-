@@ -27,7 +27,7 @@ label {
   margin: 18px 0 8px;
 }
 
-input {
+input, select {
   width: 100%;
   padding: 14px;
   border-radius: 9px;
@@ -35,18 +35,6 @@ input {
   background: #20364e;
   color: white;
   outline: none;
-}
-
-.wallet-box {
-  background: #20364e;
-  padding: 14px;
-  border-radius: 9px;
-  overflow-wrap: anywhere;
-  line-height: 1.6;
-}
-
-.wallet-box strong {
-  color: #00e5a0;
 }
 
 .balance-box {
@@ -76,10 +64,15 @@ button {
   padding: 15px;
   border: none;
   border-radius: 10px;
-  margin-top: 20px;
+  margin-top: 15px;
   background: #00d99a;
   font-weight: bold;
   cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .max-btn {
@@ -89,13 +82,14 @@ button {
   color: white;
 }
 
-.back {
-  background: #263b54;
+.save-btn {
+  background: #2876a8;
   color: white;
 }
 
-button:disabled {
-  opacity: 0.5;
+.back {
+  background: #263b54;
+  color: white;
 }
 
 .note {
@@ -116,15 +110,25 @@ button:disabled {
 </style></head><body><div class="container"><h2>Withdraw to Wallet</h2><div class="balance-box">
   <p>Available CVC Balance</p>
   <strong id="balance">Loading...</strong>
-</div><label>Saved Wallet Address</label>
+</div><h3>Wallet Details</h3><label>Choose Wallet Network</label>
 
-<div class="wallet-box" id="walletAddress">
-  Loading...
-</div><label>Wallet Network</label>
+<select id="walletNetwork">
+  <option value="">Select network</option>
+  <option value="BNB Smart Chain">BNB Smart Chain</option>
+  <option value="Ethereum Mainnet">Ethereum Mainnet</option>
+</select><label>Receiving Wallet Address</label>
 
-<div class="wallet-box">
-  <strong id="walletNetwork">Loading...</strong>
-</div><label>Withdrawal Amount (CVC)</label>
+<input
+type="text"
+id="walletAddress"
+placeholder="Enter your wallet address"
+autocomplete="off"
+
+«»
+
+<button type="button" class="save-btn" id="saveWalletBtn">
+  SAVE WALLET DETAILS
+</button><h3 style="margin-top:30px;">Withdrawal Amount</h3><label>Amount (CVC)</label>
 
 <div class="amount-row">
   <input
@@ -139,7 +143,8 @@ button:disabled {
 </div><button id="submitBtn">
   SUBMIT WITHDRAWAL REQUEST
 </button><p class="note">
-  Your request will be saved for review. Submitting a request does not automatically transfer cryptocurrency.
+  Your withdrawal request will be saved for review.
+  Submitting a request does not automatically transfer cryptocurrency.
 </p><button class="back" onclick="location.href='crypto.html'">
   BACK TO DASHBOARD
 </button><p id="message"></p></div><script type="module">
@@ -160,14 +165,18 @@ const databases = new Databases(client);
 const DATABASE_ID = "69d1aaf5000f43c786be";
 const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
 
-// ADD YOUR NEW SUCCESS PAGE URL HERE LATER
+// ADD YOUR NEW SUCCESS URL HERE LATER
 const SUCCESS_URL = "";
 
-let currentUser;
+let currentUser = null;
 let availableBalance = 0;
 
 const balanceElement = document.getElementById("balance");
+const walletAddressInput = document.getElementById("walletAddress");
+const walletNetworkInput = document.getElementById("walletNetwork");
 const amountInput = document.getElementById("amount");
+
+const saveWalletBtn = document.getElementById("saveWalletBtn");
 const submitBtn = document.getElementById("submitBtn");
 const maxBtn = document.getElementById("maxBtn");
 const message = document.getElementById("message");
@@ -181,7 +190,11 @@ function formatCVC(value) {
   return Number(value || 0).toFixed(12);
 }
 
-// LOAD USER AND WALLET DETAILS
+function validateWalletAddress(address) {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+// LOAD ACCOUNT
 async function loadData() {
   try {
     currentUser = await account.get();
@@ -197,48 +210,106 @@ async function loadData() {
     balanceElement.textContent =
       formatCVC(availableBalance) + " CVC";
 
-    document.getElementById("walletAddress").textContent =
-      profile.walletAddress || "No wallet address saved";
-
-    document.getElementById("walletNetwork").textContent =
-      profile.walletNetwork || "No network saved";
-
-    if (!profile.walletAddress || !profile.walletNetwork) {
-      submitBtn.disabled = true;
-      showMessage("Your wallet address or network is missing from your profile.");
-      return;
-    }
-
-    if (availableBalance <= 0) {
-      showMessage("You currently have no available balance.");
-    }
+    // Load previously saved wallet details
+    walletAddressInput.value = profile.walletAddress || "";
+    walletNetworkInput.value = profile.walletNetwork || "";
 
   } catch (error) {
     console.error(error);
+
     balanceElement.textContent = "Unavailable";
+    saveWalletBtn.disabled = true;
     submitBtn.disabled = true;
+
     showMessage("Unable to load account: " + error.message);
   }
 }
 
-// MAX BUTTON
+// SAVE WALLET DETAILS
+saveWalletBtn.addEventListener("click", async () => {
+
+  if (!currentUser) {
+    showMessage("Please log in again.");
+    return;
+  }
+
+  const walletAddress = walletAddressInput.value.trim();
+  const walletNetwork = walletNetworkInput.value;
+
+  if (!walletNetwork) {
+    showMessage("Please select your wallet network.");
+    return;
+  }
+
+  if (!validateWalletAddress(walletAddress)) {
+    showMessage("Enter a valid BNB or Ethereum wallet address.");
+    return;
+  }
+
+  saveWalletBtn.disabled = true;
+  saveWalletBtn.textContent = "SAVING...";
+
+  try {
+
+    await databases.updateDocument(
+      DATABASE_ID,
+      USERS_COLLECTION_ID,
+      currentUser.$id,
+      {
+        walletAddress: walletAddress,
+        walletNetwork: walletNetwork
+      }
+    );
+
+    showMessage("Wallet address and network saved successfully.", "success");
+
+  } catch (error) {
+
+    console.error(error);
+    showMessage("Unable to save wallet details: " + error.message);
+
+  } finally {
+
+    saveWalletBtn.disabled = false;
+    saveWalletBtn.textContent = "SAVE WALLET DETAILS";
+
+  }
+
+});
+
+// MAX WITHDRAWAL
 maxBtn.addEventListener("click", () => {
+
   if (availableBalance <= 0) {
     showMessage("Your balance is zero.");
     return;
   }
 
   amountInput.value = availableBalance.toFixed(12);
+
   showMessage("Maximum balance selected.", "success");
+
 });
 
-// SAVE WITHDRAWAL REQUEST
+// SUBMIT WITHDRAWAL REQUEST
 submitBtn.addEventListener("click", async () => {
-
-  const amount = Number(amountInput.value);
 
   if (!currentUser) {
     showMessage("Please log in again.");
+    return;
+  }
+
+  const walletAddress = walletAddressInput.value.trim();
+  const walletNetwork = walletNetworkInput.value;
+  const amount = Number(amountInput.value);
+
+  if (!walletNetwork) {
+    showMessage("Select your wallet network.");
+    return;
+  }
+
+  if (!validateWalletAddress(walletAddress)) {
+    showMessage("Enter a valid wallet address.");
     return;
   }
 
@@ -254,14 +325,15 @@ submitBtn.addEventListener("click", async () => {
 
   const confirmed = confirm(
     "Confirm withdrawal request?\n\n" +
-    "Amount: " + formatCVC(amount) + " CVC\n\n" +
-    "Your saved wallet address and network will be used."
+    "Amount: " + formatCVC(amount) + " CVC\n" +
+    "Network: " + walletNetwork + "\n" +
+    "Wallet: " + walletAddress
   );
 
   if (!confirmed) return;
 
   submitBtn.disabled = true;
-  submitBtn.textContent = "SAVING...";
+  submitBtn.textContent = "SAVING REQUEST...";
 
   try {
 
@@ -270,16 +342,15 @@ submitBtn.addEventListener("click", async () => {
       USERS_COLLECTION_ID,
       currentUser.$id,
       {
+        walletAddress: walletAddress,
+        walletNetwork: walletNetwork,
         withdrawalAmount: amount,
         withdrawalStatus: "Pending",
         withdrawalRequestedAt: new Date().toISOString()
       }
     );
 
-    showMessage(
-      "Withdrawal request saved successfully!",
-      "success"
-    );
+    showMessage("Withdrawal request saved successfully.", "success");
 
     if (SUCCESS_URL.trim()) {
       setTimeout(() => {
@@ -294,11 +365,12 @@ submitBtn.addEventListener("click", async () => {
     console.error(error);
 
     showMessage(
-      "Failed to save withdrawal request: " + error.message
+      "Unable to save withdrawal request: " + error.message
     );
 
     submitBtn.disabled = false;
     submitBtn.textContent = "SUBMIT WITHDRAWAL REQUEST";
+
   }
 
 });
