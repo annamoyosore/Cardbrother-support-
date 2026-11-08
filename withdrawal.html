@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Crypto Vault - Withdrawal</title>
 
 <style>
@@ -299,12 +298,15 @@ footer {
                 type="number"
                 id="amount"
                 placeholder="Enter amount"
-                min="0.000000000001"
+                min="0"
                 step="any"
                 required
             >
 
-            <button type="button" class="max-button" id="maxBtn">
+            <button
+                type="button"
+                class="max-button"
+                id="maxBtn">
                 MAX
             </button>
 
@@ -314,9 +316,7 @@ footer {
             type="submit"
             class="submit-button"
             id="submitBtn">
-
             SUBMIT WITHDRAWAL
-
         </button>
 
     </form>
@@ -343,8 +343,8 @@ footer {
         <h2>Verify Receiving Address</h2>
 
         <p class="modal-description">
-            Please carefully confirm that the wallet address
-            and network below are correct before continuing.
+            Carefully confirm that the wallet address and
+            network below are correct before continuing.
         </p>
 
         <div class="wallet-details">
@@ -377,7 +377,6 @@ footer {
     </div>
 
 </div>
-
 
 <script type="module" src="./withdrawal.js"></script>
 
