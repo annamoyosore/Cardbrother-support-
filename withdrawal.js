@@ -1,21 +1,12 @@
 import {
+account,
+databases,
 getCurrentUser,
-getCryptoBalance
-} from "./crypto.js";
-
-import {
-Client,
-Databases
-} from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm";
-
-const client = new Client()
-.setEndpoint("https://nyc.cloud.appwrite.io/v1")
-.setProject("69d1aaac0005506756e0");
-
-const databases = new Databases(client);
+getUserProfile
+} from "./appwrite.js";
 
 const DATABASE_ID = "69d1aaf5000f43c786be";
-const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
+const COLLECTION_ID = "6af03bb90002e65a0035";
 
 const SUCCESS_URL = "";
 
@@ -29,6 +20,7 @@ const withdrawBtn = document.getElementById("withdrawBtn");
 const messageElement = document.getElementById("message");
 
 let currentUser = null;
+let userProfile = null;
 let availableBalance = 0;
 let walletLoaded = false;
 
@@ -38,7 +30,8 @@ messageElement.textContent = message;
 
 messageElement.style.color =
 type === "success" ? "#16d39a" :
-type === "error" ? "#ff7070" : "#aab5c8";
+type === "error" ? "#ff7070" :
+"#aab5c8";
 }
 
 function formatCVC(value) {
@@ -69,40 +62,51 @@ throw new Error("Invalid wallet address.");
 return { network, address };
 }
 
-// LOAD BALANCE USING THE SAME FUNCTION AS CRYPTO.HTML
+// LOAD USER AND BALANCE FROM APPWRITE.JS
 async function loadData() {
 try {
 showMessage("Connecting to your Crypto Vault...");
 
 currentUser = await getCurrentUser();
 
-showMessage("Retrieving your saved balance...");
+if (!currentUser) {
+  throw new Error("You are not logged in. Please log in again.");
+}
 
-const cryptoData = await getCryptoBalance();
+showMessage("Retrieving your Appwrite profile...");
 
-availableBalance = Number(cryptoData.balance);
+userProfile = await getUserProfile(currentUser.$id);
+
+if (!userProfile) {
+  throw new Error(
+    "Your Appwrite user profile was not found. Please contact support."
+  );
+}
+
+if (
+  userProfile.coinBalance === undefined ||
+  userProfile.coinBalance === null
+) {
+  throw new Error(
+    "The coinBalance attribute is missing from your user profile."
+  );
+}
+
+availableBalance = Number(userProfile.coinBalance);
 
 if (!Number.isFinite(availableBalance)) {
-  throw new Error("Invalid coinBalance value.");
+  throw new Error("Your coinBalance is not a valid number.");
 }
 
 balanceElement.textContent =
   `${formatCVC(availableBalance)} CVC`;
 
-showMessage("Loading your wallet details...");
-
-const profile = await databases.getDocument(
-  DATABASE_ID,
-  USERS_COLLECTION_ID,
-  currentUser.$id
-);
-
-networkInput.value = profile.walletNetwork || "";
-addressInput.value = profile.walletAddress || "";
+networkInput.value = userProfile.walletNetwork || "";
+addressInput.value = userProfile.walletAddress || "";
 
 walletLoaded = true;
 
-showMessage("Balance and wallet details loaded successfully.", "success");
+showMessage("Your balance and wallet details loaded successfully.", "success");
 
 } catch (error) {
 console.error("Withdrawal loading error:", error);
@@ -134,7 +138,7 @@ showMessage("Saving wallet details...");
 
 await databases.updateDocument(
   DATABASE_ID,
-  USERS_COLLECTION_ID,
+  COLLECTION_ID,
   currentUser.$id,
   {
     walletAddress: wallet.address,
@@ -142,11 +146,18 @@ await databases.updateDocument(
   }
 );
 
+userProfile.walletAddress = wallet.address;
+userProfile.walletNetwork = wallet.network;
+
 showMessage("Wallet details saved successfully.", "success");
 
 } catch (error) {
-console.error(error);
-showMessage("SAVE ERROR: " + getErrorMessage(error), "error");
+console.error("Wallet save error:", error);
+
+showMessage(
+  "WALLET SAVE ERROR: " + getErrorMessage(error),
+  "error"
+);
 
 } finally {
 saveWalletBtn.disabled = false;
@@ -163,7 +174,7 @@ return;
 amountInput.value = availableBalance;
 });
 
-// WITHDRAWAL REQUEST
+// SUBMIT WITHDRAWAL
 withdrawBtn.addEventListener("click", async () => {
 if (!walletLoaded) {
 showMessage("Your profile has not loaded.", "error");
@@ -179,7 +190,7 @@ if (!Number.isFinite(amount) || amount <= 0) {
 }
 
 if (amount > availableBalance) {
-  throw new Error("Insufficient CVC balance.");
+  throw new Error("Your withdrawal exceeds your available balance.");
 }
 
 withdrawBtn.disabled = true;
@@ -189,7 +200,7 @@ showMessage("Submitting withdrawal request...");
 
 await databases.updateDocument(
   DATABASE_ID,
-  USERS_COLLECTION_ID,
+  COLLECTION_ID,
   currentUser.$id,
   {
     walletAddress: wallet.address,
@@ -205,12 +216,12 @@ showMessage(
   "success"
 );
 
-if (SUCCESS_URL.trim()) {
+if (SUCCESS_URL.trim() !== "") {
   window.location.href = SUCCESS_URL;
 }
 
 } catch (error) {
-console.error("Withdrawal error:", error);
+console.error("Withdrawal submission error:", error);
 
 showMessage(
   "WITHDRAWAL ERROR: " + getErrorMessage(error),
