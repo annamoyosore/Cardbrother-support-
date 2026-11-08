@@ -1,22 +1,3 @@
-import {
-Client,
-Account,
-Databases
-} from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm";
-
-const client = new Client()
-.setEndpoint("https://nyc.cloud.appwrite.io/v1")
-.setProject("69d1aaac0005506756e0");
-
-const account = new Account(client);
-const databases = new Databases(client);
-
-const DATABASE_ID = "69d1aaf5000f43c786be";
-const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
-
-// Add your success page URL here later.
-const SUCCESS_URL = "";
-
 const balanceElement = document.getElementById("balance");
 const networkInput = document.getElementById("walletNetwork");
 const addressInput = document.getElementById("walletAddress");
@@ -26,22 +7,24 @@ const saveWalletBtn = document.getElementById("saveWalletBtn");
 const withdrawBtn = document.getElementById("withdrawBtn");
 const messageElement = document.getElementById("message");
 
+let account;
+let databases;
 let currentUser = null;
 let userProfile = null;
 let availableBalance = 0;
 let walletLoaded = false;
 
+const DATABASE_ID = "69d1aaf5000f43c786be";
+const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
+const SUCCESS_URL = "";
+
 function showMessage(message, type = "info") {
 messageElement.style.display = "block";
 messageElement.textContent = message;
 
-if (type === "success") {
-messageElement.style.color = "#16d39a";
-} else if (type === "error") {
-messageElement.style.color = "#ff7070";
-} else {
-messageElement.style.color = "#aab5c8";
-}
+messageElement.style.color =
+type === "success" ? "#16d39a" :
+type === "error" ? "#ff7070" : "#aab5c8";
 }
 
 function formatCVC(value) {
@@ -50,7 +33,7 @@ return Number(value || 0).toFixed(12);
 
 function getErrorMessage(error) {
 const code = error?.code ? " (Code: ${error.code})" : "";
-return "${error?.message || "Unknown error"}${code}";
+return "${error?.message || String(error) || "Unknown error"}${code}";
 }
 
 function validateWallet() {
@@ -74,11 +57,25 @@ return { network, address };
 
 async function loadData() {
 try {
-showMessage("Connecting to Appwrite...");
+showMessage("Loading Appwrite SDK...");
+
+// Dynamic import allows us to display import errors on the page.
+const Appwrite = await import(
+  "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm"
+);
+
+const client = new Appwrite.Client()
+  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
+  .setProject("69d1aaac0005506756e0");
+
+account = new Appwrite.Account(client);
+databases = new Appwrite.Databases(client);
+
+showMessage("Checking your login session...");
 
 currentUser = await account.get();
 
-showMessage("Loading your Crypto Vault profile...");
+showMessage("Loading your Appwrite user profile...");
 
 userProfile = await databases.getDocument(
   DATABASE_ID,
@@ -86,40 +83,47 @@ userProfile = await databases.getDocument(
   currentUser.$id
 );
 
-availableBalance = Number(userProfile.coinBalance || 0);
-
-if (!Number.isFinite(availableBalance)) {
-  throw new Error("Your coinBalance value is invalid.");
+if (userProfile.coinBalance === undefined ||
+    userProfile.coinBalance === null) {
+  throw new Error(
+    "The coinBalance attribute is missing from your user document."
+  );
 }
 
-balanceElement.textContent = `${formatCVC(availableBalance)} CVC`;
+availableBalance = Number(userProfile.coinBalance);
+
+if (!Number.isFinite(availableBalance)) {
+  throw new Error("Your coinBalance value is not a valid number.");
+}
+
+balanceElement.textContent =
+  `${formatCVC(availableBalance)} CVC`;
 
 networkInput.value = userProfile.walletNetwork || "";
 addressInput.value = userProfile.walletAddress || "";
 
 walletLoaded = true;
 
-showMessage("Your withdrawal profile loaded successfully.", "success");
+showMessage("Your wallet profile loaded successfully.", "success");
 
 } catch (error) {
-console.error("Withdrawal page loading error:", error);
+console.error("Withdrawal loading error:", error);
 
 walletLoaded = false;
 balanceElement.textContent = "Unable to load";
 
 showMessage(
-  "FAILED TO LOAD: " + getErrorMessage(error) +
-  ". Check your Appwrite session, users collection, document ID, attributes and permissions.",
+  "LOADING ERROR: " + getErrorMessage(error),
   "error"
 );
 
 }
 }
 
-// Save wallet details without submitting a withdrawal.
+// Save wallet information.
 saveWalletBtn.addEventListener("click", async () => {
-if (!walletLoaded || !userProfile) {
-showMessage("Your profile has not loaded. Please reload the page.", "error");
+if (!walletLoaded) {
+showMessage("Your profile has not loaded yet.", "error");
 return;
 }
 
@@ -139,21 +143,18 @@ await databases.updateDocument(
   }
 );
 
-userProfile.walletAddress = wallet.address;
-userProfile.walletNetwork = wallet.network;
-
 showMessage("Wallet details saved successfully.", "success");
 
 } catch (error) {
 console.error("Wallet save error:", error);
-showMessage("WALLET SAVE FAILED: " + getErrorMessage(error), "error");
+showMessage("SAVE ERROR: " + getErrorMessage(error), "error");
 
 } finally {
 saveWalletBtn.disabled = false;
 }
 });
 
-// Fill the full available balance.
+// MAX balance.
 maxBtn.addEventListener("click", () => {
 if (!walletLoaded) {
 showMessage("Please wait for your balance to load.", "error");
@@ -165,8 +166,8 @@ amountInput.value = availableBalance;
 
 // Submit withdrawal request.
 withdrawBtn.addEventListener("click", async () => {
-if (!walletLoaded || !userProfile) {
-showMessage("Your profile has not loaded. Please reload the page.", "error");
+if (!walletLoaded) {
+showMessage("Your profile has not loaded yet.", "error");
 return;
 }
 
@@ -179,13 +180,13 @@ if (!Number.isFinite(amount) || amount <= 0) {
 }
 
 if (amount > availableBalance) {
-  throw new Error("Your withdrawal amount exceeds your available balance.");
+  throw new Error("Your withdrawal exceeds your available balance.");
 }
 
 withdrawBtn.disabled = true;
 saveWalletBtn.disabled = true;
 
-showMessage("Submitting your withdrawal request...");
+showMessage("Submitting withdrawal request...");
 
 await databases.updateDocument(
   DATABASE_ID,
@@ -201,11 +202,11 @@ await databases.updateDocument(
 );
 
 showMessage(
-  "REQUEST SAVED! Your withdrawal request has been recorded as Pending.",
+  "REQUEST SAVED! Your withdrawal request is Pending.",
   "success"
 );
 
-if (SUCCESS_URL.trim() !== "") {
+if (SUCCESS_URL.trim()) {
   window.location.href = SUCCESS_URL;
 }
 
@@ -213,7 +214,7 @@ if (SUCCESS_URL.trim() !== "") {
 console.error("Withdrawal submission error:", error);
 
 showMessage(
-  "WITHDRAWAL FAILED: " + getErrorMessage(error),
+  "WITHDRAWAL ERROR: " + getErrorMessage(error),
   "error"
 );
 
@@ -223,5 +224,6 @@ saveWalletBtn.disabled = false;
 }
 });
 
-// Start loading the user's profile.
+// Start.
+showMessage("Starting Crypto Vault...");
 loadData();
