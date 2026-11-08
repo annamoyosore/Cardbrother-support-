@@ -61,7 +61,25 @@ h2 {
     color: #aab9ca;
     font-size: 14px;
     line-height: 1.6;
+    margin-bottom: 22px;
+}
+
+.balance-box {
+    background: linear-gradient(135deg, #087c62, #123f57);
+    padding: 20px;
+    border-radius: 14px;
     margin-bottom: 25px;
+}
+
+.balance-box small {
+    color: #d1f9eb;
+}
+
+.balance {
+    font-size: 25px;
+    font-weight: bold;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
 }
 
 label {
@@ -87,6 +105,28 @@ input::placeholder {
     color: #73849a;
 }
 
+.amount-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.amount-wrapper input {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.max-button {
+    background: #00d99a;
+    color: #06251c;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
 .submit-button {
     width: 100%;
     background: #00d99a;
@@ -99,7 +139,7 @@ input::placeholder {
     cursor: pointer;
 }
 
-.submit-button:disabled {
+button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -129,6 +169,75 @@ input::placeholder {
     color: #ff8d9b;
 }
 
+/* CONFIRMATION POPUP */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #122238;
+    width: 100%;
+    max-width: 420px;
+    padding: 25px;
+    border-radius: 18px;
+}
+
+.modal-content h2 {
+    color: #00e5a0;
+    margin-bottom: 15px;
+}
+
+.wallet-details {
+    background: #07111f;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 18px 0;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.wallet-details span {
+    color: #00e5a0;
+}
+
+.modal-description {
+    color: #aab9ca;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 18px;
+}
+
+.verify-button {
+    width: 100%;
+    padding: 15px;
+    background: #00d99a;
+    color: #06251c;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cancel-button {
+    width: 100%;
+    padding: 15px;
+    background: #24364b;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
 footer {
     text-align: center;
     color: #73849a;
@@ -143,42 +252,48 @@ footer {
 
 <div class="container">
 
-    <header>
-        <div class="logo">₿ CRYPTO VAULT</div>
-        <a href="./crypto.html" class="back">← Back</a>
-    </header>
+<header>
+    <div class="logo">₿ CRYPTO VAULT</div>
+    <a href="./crypto.html" class="back">← Back</a>
+</header>
 
-    <div class="card">
+<div class="card">
 
-        <h2>💰 Withdraw CVC</h2>
+    <h2>💰 Withdraw CVC</h2>
 
-        <p class="description">
-            Enter your wallet details and the amount of CVC
-            you want to withdraw. Your request will be submitted
-            for review.
-        </p>
+    <p class="description">
+        Enter your receiving wallet details and the amount
+        you wish to withdraw.
+    </p>
 
-        <form id="withdrawalForm">
+    <div class="balance-box">
+        <small>AVAILABLE CVC BALANCE</small>
+        <div class="balance" id="balance">Loading...</div>
+    </div>
 
-            <label for="network">Select Network</label>
+    <form id="withdrawalForm">
 
-            <select id="network" required>
-                <option value="">Choose network</option>
-                <option value="BNB Smart Chain">BNB Smart Chain</option>
-                <option value="Ethereum Mainnet">Ethereum Mainnet</option>
-            </select>
+        <label for="network">Select Network</label>
 
-            <label for="walletAddress">Wallet Address</label>
+        <select id="network" required>
+            <option value="">Choose network</option>
+            <option value="BNB Smart Chain">BNB Smart Chain</option>
+            <option value="Ethereum Mainnet">Ethereum Mainnet</option>
+        </select>
 
-            <input
-                type="text"
-                id="walletAddress"
-                placeholder="Enter your 0x wallet address"
-                autocomplete="off"
-                required
-            >
+        <label for="walletAddress">Receiving Wallet Address</label>
 
-            <label for="amount">Withdrawal Amount (CVC)</label>
+        <input
+            type="text"
+            id="walletAddress"
+            placeholder="Enter your 0x wallet address"
+            autocomplete="off"
+            required
+        >
+
+        <label for="amount">Withdrawal Amount (CVC)</label>
+
+        <div class="amount-wrapper">
 
             <input
                 type="number"
@@ -189,29 +304,80 @@ footer {
                 required
             >
 
-            <button
-                type="submit"
-                class="submit-button"
-                id="submitBtn">
-
-                SUBMIT WITHDRAWAL REQUEST
-
+            <button type="button" class="max-button" id="maxBtn">
+                MAX
             </button>
 
-        </form>
-
-        <div id="message" class="message info">
-            Loading your saved wallet details...
         </div>
+
+        <button
+            type="submit"
+            class="submit-button"
+            id="submitBtn">
+
+            SUBMIT WITHDRAWAL
+
+        </button>
+
+    </form>
+
+    <div id="message" class="message info">
+        Loading your account...
+    </div>
+
+</div>
+
+<footer>
+    Crypto Vault · Withdrawal requests are subject to review.
+</footer>
+
+</div>
+
+
+<!-- CONFIRMATION POPUP -->
+
+<div class="modal" id="confirmModal">
+
+    <div class="modal-content">
+
+        <h2>Verify Receiving Address</h2>
+
+        <p class="modal-description">
+            Please carefully confirm that the wallet address
+            and network below are correct before continuing.
+        </p>
+
+        <div class="wallet-details">
+
+            <div>Network:</div>
+            <span id="confirmNetwork"></span>
+
+            <br><br>
+
+            <div>Receiving Address:</div>
+            <span id="confirmAddress"></span>
+
+            <br><br>
+
+            <div>Withdrawal Amount:</div>
+            <span id="confirmAmount"></span> CVC
+
+        </div>
+
+        <button class="verify-button" id="verifyBtn">
+            VERIFY ADDRESS
+        </button>
+
+        <button class="cancel-button" id="cancelBtn">
+            CANCEL
+        </button>
+
+        <div id="modalMessage" class="message"></div>
 
     </div>
 
-    <footer>
-        Crypto Vault · Withdrawal requests are subject to review.
-        Submitting a request does not mean cryptocurrency has been transferred.
-    </footer>
-
 </div>
+
 
 <script type="module" src="./withdrawal.js"></script>
 
