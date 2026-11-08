@@ -1,10 +1,7 @@
 import {
 Client,
 Account,
-Databases,
-ID,
-Permission,
-Role
+Databases
 } from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm";
 
 const client = new Client()
@@ -14,19 +11,20 @@ const client = new Client()
 const account = new Account(client);
 const databases = new Databases(client);
 
-// DATABASE CONFIGURATION
+// APPWRITE DATABASE
 const DATABASE_ID = "69d1aaf5000f43c786be";
-
 const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
 
-const TRANSACTIONS_COLLECTION_ID = "crypto_transactions";
+// MINING REWARDS
+const TAP_REWARD = 0.000000002333;
+const PUZZLE_REWARD = 0.000000025000;
 
 // GET CURRENT USER
 export async function getCurrentUser() {
 return await account.get();
 }
 
-// GET USER PROFILE
+// GET SAVED CRYPTO BALANCE
 export async function getCryptoBalance() {
 const user = await account.get();
 
@@ -45,8 +43,8 @@ puzzleCompleted: Number(profile.puzzleCompleted || 0)
 };
 }
 
-// SAVE REWARD
-async function saveReward(amount, type, description, extra = {}) {
+// SAVE MINING REWARD
+async function saveReward(amount, extra = {}) {
 const user = await account.get();
 
 const profile = await databases.getDocument(
@@ -56,7 +54,9 @@ user.$id
 );
 
 const balance = Number(profile.coinBalance || 0) + amount;
-const totalMined = Number(profile.totalMined || 0) + amount;
+
+const totalMined =
+Number(profile.totalMined || 0) + amount;
 
 await databases.updateDocument(
 DATABASE_ID,
@@ -69,30 +69,15 @@ totalMined,
 }
 );
 
-await databases.createDocument(
-DATABASE_ID,
-TRANSACTIONS_COLLECTION_ID,
-ID.unique(),
-{
-userId: user.$id,
-type,
-amount,
-description,
-status: "Completed"
-},
-[
-Permission.read(Role.user(user.$id))
-]
-);
-
 return {
 success: true,
 balance,
-totalMined
+totalMined,
+earned: amount
 };
 }
 
-// TAP TO EARN
+// TAP MINING
 export async function tapToEarn() {
 const user = await account.get();
 
@@ -109,26 +94,20 @@ const previous = profile.lastTapAt
 : 0;
 
 if (now - previous < 5000) {
-throw new Error("Please wait 5 seconds before tapping again.");
+throw new Error(
+"Please wait 5 seconds before tapping again."
+);
 }
 
-const tapCount = Number(profile.tapCount || 0) + 1;
+const tapCount =
+Number(profile.tapCount || 0) + 1;
 
-await databases.updateDocument(
-DATABASE_ID,
-USERS_COLLECTION_ID,
-user.$id,
+return await saveReward(
+TAP_REWARD,
 {
 tapCount,
 lastTapAt: new Date().toISOString()
 }
-);
-
-return await saveReward(
-1,
-"Tap",
-"Tap mining reward",
-{ tapCount }
 );
 }
 
@@ -149,16 +128,16 @@ user.$id
 const today = new Date().toISOString().slice(0, 10);
 
 if (profile.lastPuzzleDate === today) {
-throw new Error("You have already completed today's puzzle.");
+throw new Error(
+"You have already completed today's puzzle."
+);
 }
 
 const puzzleCompleted =
 Number(profile.puzzleCompleted || 0) + 1;
 
 return await saveReward(
-25,
-"Puzzle",
-"Daily puzzle reward",
+PUZZLE_REWARD,
 {
 puzzleCompleted,
 lastPuzzleDate: today
