@@ -1,177 +1,219 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crypto Vault - Withdrawal</title>  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #0b1220;
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
+<title>Crypto Vault - Withdrawal</title>
 
-    .container {
-      max-width: 480px;
-      margin: 30px auto;
-      background: #151f32;
-      padding: 25px;
-      border-radius: 16px;
-    }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    h2 {
-      text-align: center;
-      color: #16d39a;
-    }
+body {
+    background: #07111f;
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
 
-    .balance-box {
-      background: #0b1220;
-      padding: 18px;
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 22px;
-    }
+.container {
+    max-width: 500px;
+    margin: 30px auto;
+}
 
-    .balance-box small {
-      color: #aab5c8;
-    }
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
 
-    .balance {
-      display: block;
-      color: #16d39a;
-      font-size: 23px;
-      font-weight: bold;
-      margin-top: 8px;
-      overflow-wrap: anywhere;
-    }
+.logo {
+    color: #00e5a0;
+    font-size: 21px;
+    font-weight: bold;
+}
 
-    label {
-      display: block;
-      margin: 16px 0 7px;
-      font-size: 14px;
-    }
+.back {
+    background: #24364b;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+}
 
-    input, select {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #34435c;
-      border-radius: 8px;
-      background: #0b1220;
-      color: #fff;
-      outline: none;
-      font-size: 15px;
-    }
+.card {
+    background: #122238;
+    padding: 25px;
+    border-radius: 18px;
+}
 
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 8px;
-      background: #16d39a;
-      color: #07150f;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-    }
+h2 {
+    margin-bottom: 12px;
+}
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+.description {
+    color: #aab9ca;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
 
-    .secondary {
-      background: #263751;
-      color: white;
-    }
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: bold;
+}
 
-    .max-btn {
-      margin-top: 8px;
-      padding: 9px;
-      background: #263751;
-      color: white;
-    }
+input, select {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    background: #07111f;
+    color: white;
+    font-size: 15px;
+}
 
-    #message {
-      margin-top: 18px;
-      padding: 12px;
-      border-radius: 8px;
-      background: #0b1220;
-      color: #aab5c8;
-      font-size: 13px;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-      display: none;
-    }
+input::placeholder {
+    color: #73849a;
+}
 
-    .note {
-      color: #aab5c8;
-      font-size: 12px;
-      line-height: 1.5;
-      margin-top: 18px;
-    }
+.submit-button {
+    width: 100%;
+    background: #00d99a;
+    color: #06251c;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-    a {
-      color: #16d39a;
-      text-decoration: none;
-    }
-  </style></head><body>  <div class="container"><h2>Crypto Vault Withdrawal</h2>
+.submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-<div class="balance-box">
-  <small>Available CVC Balance</small>
-  <span class="balance" id="balance">Loading...</span>
+.message {
+    display: block;
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.info {
+    background: #172d43;
+    color: #b8c9da;
+}
+
+.success {
+    background: #103b30;
+    color: #00e5a0;
+}
+
+.error {
+    background: #421c25;
+    color: #ff8d9b;
+}
+
+footer {
+    text-align: center;
+    color: #73849a;
+    font-size: 12px;
+    margin-top: 25px;
+    line-height: 1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <div class="logo">₿ CRYPTO VAULT</div>
+        <a href="./crypto.html" class="back">← Back</a>
+    </header>
+
+    <div class="card">
+
+        <h2>💰 Withdraw CVC</h2>
+
+        <p class="description">
+            Enter your wallet details and the amount of CVC
+            you want to withdraw. Your request will be submitted
+            for review.
+        </p>
+
+        <form id="withdrawalForm">
+
+            <label for="network">Select Network</label>
+
+            <select id="network" required>
+                <option value="">Choose network</option>
+                <option value="BNB Smart Chain">BNB Smart Chain</option>
+                <option value="Ethereum Mainnet">Ethereum Mainnet</option>
+            </select>
+
+            <label for="walletAddress">Wallet Address</label>
+
+            <input
+                type="text"
+                id="walletAddress"
+                placeholder="Enter your 0x wallet address"
+                autocomplete="off"
+                required
+            >
+
+            <label for="amount">Withdrawal Amount (CVC)</label>
+
+            <input
+                type="number"
+                id="amount"
+                placeholder="Enter amount"
+                min="0.000000000001"
+                step="any"
+                required
+            >
+
+            <button
+                type="submit"
+                class="submit-button"
+                id="submitBtn">
+
+                SUBMIT WITHDRAWAL REQUEST
+
+            </button>
+
+        </form>
+
+        <div id="message" class="message info">
+            Loading your saved wallet details...
+        </div>
+
+    </div>
+
+    <footer>
+        Crypto Vault · Withdrawal requests are subject to review.
+        Submitting a request does not mean cryptocurrency has been transferred.
+    </footer>
+
 </div>
 
-<label for="walletNetwork">Wallet Network</label>
-<select id="walletNetwork">
-  <option value="">Select network</option>
-  <option value="BNB Smart Chain">BNB Smart Chain</option>
-  <option value="Ethereum Mainnet">Ethereum Mainnet</option>
-</select>
+<script type="module" src="./withdrawal.js"></script>
 
-<label for="walletAddress">Wallet Address</label>
-<input
-  type="text"
-  id="walletAddress"
-  placeholder="Enter your 0x wallet address"
-  autocomplete="off"
->
-
-<button type="button" id="saveWalletBtn" class="secondary">
-  Save Wallet Details
-</button>
-
-<label for="withdrawalAmount">Withdrawal Amount (CVC)</label>
-<input
-  type="number"
-  id="withdrawalAmount"
-  placeholder="Enter amount"
-  min="0"
-  step="any"
->
-
-<button type="button" id="maxBtn" class="max-btn">
-  MAX
-</button>
-
-<button type="button" id="withdrawBtn">
-  Submit Withdrawal Request
-</button>
-
-<div id="message"></div>
-
-<p class="note">
-  Withdrawal requests are saved for review. Saving a request does not
-  automatically transfer cryptocurrency to your wallet.
-</p>
-
-<p style="text-align:center;margin-top:20px;">
-  <a href="crypto.html">← Back to Crypto Vault</a>
-</p>
-
-  </div>  <script type="module" src="./withdrawal.js"></script></body>
+</body>
 </html>
