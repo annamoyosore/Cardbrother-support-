@@ -1,317 +1,437 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!DOCTYPE html><html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Crypto Vault Dashboard</title>
-
-<style>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Crypto Vault</title><style>
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    background: #0b0e11;
-    color: white;
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
+  background: #07111f;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding-bottom: 30px;
 }
 
 header {
-    background: #15191e;
-    padding: 20px;
-    border-bottom: 1px solid #30363d;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .logo {
-    color: #f0b90b;
-    font-weight: bold;
-    font-size: 19px;
+  color: #00e5a0;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 14px;
+  font-weight: bold;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .logout {
-    background: #302a15;
-    color: #f0b90b;
-    border: 1px solid #f0b90b;
-    padding: 9px 14px;
-    border-radius: 6px;
-    cursor: pointer;
+  background: #24364b;
+  color: white;
 }
 
 .container {
-    max-width: 550px;
-    margin: 35px auto;
-    padding: 15px;
+  padding: 15px;
+  max-width: 600px;
+  margin: auto;
 }
 
-.card {
-    background: #15191e;
-    border: 1px solid #30363d;
-    border-radius: 14px;
-    padding: 25px;
-    margin-bottom: 20px;
+.balance-card {
+  background: linear-gradient(135deg, #087c62, #123f57);
+  padding: 28px;
+  border-radius: 22px;
+  margin-bottom: 20px;
 }
 
-h1 {
-    font-size: 25px;
-    margin-bottom: 10px;
+.balance-card small {
+  color: #d1f9eb;
 }
 
-.description {
-    color: #9299a3;
-    font-size: 13px;
-    margin-bottom: 25px;
+.balance {
+  font-size: 35px;
+  font-weight: bold;
+  margin: 15px 0;
+  word-break: break-word;
 }
 
-.profile-item {
-    padding: 15px 0;
-    border-bottom: 1px solid #30363d;
+.currency {
+  color: #b8fce6;
 }
 
-.profile-label {
-    color: #9299a3;
-    font-size: 12px;
-    margin-bottom: 7px;
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.profile-value {
-    font-size: 15px;
-    font-weight: bold;
-    overflow-wrap: anywhere;
+.stat {
+  background: #122238;
+  padding: 20px;
+  border-radius: 15px;
 }
 
-.status {
-    display: inline-block;
-    background: #302a15;
-    color: #f0b90b;
-    padding: 7px 12px;
-    border-radius: 5px;
-    font-size: 12px;
+.stat h3 {
+  color: #00e5a0;
+  margin-top: 10px;
+}
+
+.section {
+  background: #122238;
+  padding: 22px;
+  border-radius: 18px;
+  margin-bottom: 18px;
+}
+
+.section h2 {
+  margin-bottom: 12px;
+  font-size: 19px;
+}
+
+.section p {
+  color: #aab9ca;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.tap-button {
+  background: #00d99a;
+  color: #06251c;
+  width: 100%;
+  font-size: 18px;
+  padding: 20px;
+}
+
+.puzzle-button {
+  background: #3e79e8;
+  color: white;
+  width: 100%;
+}
+
+.withdraw-button {
+  background: #e5a52b;
+  color: #171006;
+  width: 100%;
+}
+
+.share-button {
+  background: #243c57;
+  color: white;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #00e5a0;
+  line-height: 1.5;
 }
 
 footer {
-    text-align: center;
-    color: #727982;
-    padding: 25px;
-    font-size: 11px;
+  text-align: center;
+  color: #73849a;
+  font-size: 12px;
+  padding: 20px;
 }
+</style></head><body><header>
+  <div class="logo">₿ CRYPTO VAULT</div>
+  <button class="logout" id="logoutBtn">Logout</button>
+</header><div class="container">  <!-- BALANCE -->  <div class="balance-card">
+    <small>YOUR AVAILABLE BALANCE</small><div class="balance" id="balance">
+  Loading...
+</div>
 
-</style>
+<div class="currency">
+  CVC · Crypto Vault Coins
+</div>
 
-</head>
+  </div>  <!-- STATISTICS -->  <div class="stats"><div class="stat">
+  <small>Total Earned</small>
+  <h3 id="totalMined">0 CVC</h3>
+</div>
 
-<body>
+<div class="stat">
+  <small>Total Taps</small>
+  <h3 id="tapCount">0</h3>
+</div>
 
-<header>
+<div class="stat">
+  <small>Puzzles Solved</small>
+  <h3 id="puzzles">0</h3>
+</div>
 
-    <div class="logo">◆ CRYPTO VAULT</div>
+<div class="stat">
+  <small>Currency</small>
+  <h3>CVC</h3>
+</div>
 
-    <button class="logout" id="logoutButton">
-        Logout
-    </button>
+  </div>  <!-- TAP MINING -->  <div class="section"><h2>⚡ Tap Mining</h2>
 
-</header>
+<p>
+  Tap to earn 1 CVC. A five-second cooldown applies.
+</p>
 
+<button class="tap-button" id="tapBtn">
+  TAP TO EARN +1 CVC
+</button>
 
-<main class="container">
+<div class="message" id="tapMessage"></div>
 
-    <section class="card">
+  </div>  <!-- PUZZLE -->  <div class="section"><h2>🧩 Daily Puzzle</h2>
 
-        <h1>Welcome, <span id="userName">User</span></h1>
+<p>
+  Solve today's puzzle and earn 25 CVC.
+</p>
 
-        <p class="description">
-            Your demonstration account information.
-        </p>
+<h2 style="
+  color:#00e5a0;
+  text-align:center;
+  font-size:32px;
+  margin:20px;
+">
+  7 + 5 = ?
+</h2>
 
-        <div class="profile-item">
+<input
+  type="number"
+  id="answer"
+  class="input"
+  placeholder="Enter your answer"
+>
 
-            <div class="profile-label">Email Address</div>
+<button class="puzzle-button" id="puzzleBtn">
+  SUBMIT ANSWER
+</button>
 
-            <div class="profile-value" id="email">Loading...</div>
+<div class="message" id="puzzleMessage"></div>
 
-        </div>
+  </div>  <!-- WITHDRAWAL -->  <div class="section"><h2>💰 Withdraw Rewards</h2>
 
+<p>
+  Submit a withdrawal request for eligible CVC rewards
+  in BNB or ETH.
+</p>
 
-        <div class="profile-item">
+<button
+  class="withdraw-button"
+  onclick="location.href='withdrawal.html'">
 
-            <div class="profile-label">Country</div>
+  WITHDRAW TO WALLET
 
-            <div class="profile-value" id="country">Loading...</div>
+</button>
 
-        </div>
+  </div>  <!-- REFERRAL -->  <div class="section"><h2>👥 Invite Friends</h2>
 
+<p>
+  Share Crypto Vault with your friends.
+  Referral rewards will become available when
+  referral verification is implemented.
+</p>
 
-        <div class="profile-item">
+<button class="share-button" id="shareBtn">
+  SHARE CRYPTO VAULT
+</button>
 
-            <div class="profile-label">Selected Wallet</div>
+<div class="message" id="shareMessage"></div>
 
-            <div class="profile-value" id="wallet">Loading...</div>
-
-        </div>
-
-
-        <div class="profile-item">
-
-            <div class="profile-label">Wallet Usage</div>
-
-            <div class="profile-value" id="months">Loading...</div>
-
-        </div>
-
-
-        <div class="profile-item">
-
-            <div class="profile-label">Verification Method</div>
-
-            <div class="profile-value" id="method">Loading...</div>
-
-        </div>
-
-
-        <div class="profile-item">
-
-            <div class="profile-label">Account Status</div>
-
-            <div class="status" id="status">Loading...</div>
-
-        </div>
-
-    </section>
-
-
-    <section class="card">
-
-        <h2 style="margin-bottom:15px;">Account Information</h2>
-
-        <p style="color:#9299a3;font-size:13px;line-height:1.8;">
-
-            This is an independent demonstration dashboard.
-            No cryptocurrency wallet is connected and no
-            real identity verification has been performed.
-
-        </p>
-
-    </section>
-
-</main>
-
-
-<footer>
-
-    Independent Crypto Vault Demonstration.
-
-</footer>
-
-
-<script type="module">
+  </div></div><footer>
+  Crypto Vault · CVC rewards are not automatically redeemable
+  for cryptocurrency.
+</footer><script type="module">
 
 import {
-    getCurrentUser,
-    getUserProfile,
-    logoutUser
-} from "./appwrite.js";
+  getCurrentUser,
+  getCryptoBalance,
+  tapToEarn,
+  submitPuzzle,
+  cryptoLogout
+} from "./crypto.js";
 
-
-// ===================================
-// LOAD USER DASHBOARD
-// ===================================
-
-async function loadDashboard() {
-
-    try {
-
-        const user = await getCurrentUser();
-
-        if (!user) {
-
-            window.location.href = "index.html";
-
-            return;
-
-        }
-
-        const profile = await getUserProfile(user.$id);
-
-        if (!profile) {
-
-            window.location.href = "index.html";
-
-            return;
-
-        }
-
-        document.getElementById("userName").textContent =
-            profile.displayName;
-
-        document.getElementById("email").textContent =
-            profile.email;
-
-        document.getElementById("country").textContent =
-            profile.country;
-
-        document.getElementById("wallet").textContent =
-            profile.selectedWallet || "Not selected";
-
-        document.getElementById("months").textContent =
-            profile.walletUsageMonths + " months";
-
-        document.getElementById("method").textContent =
-            profile.verificationMethod;
-
-        document.getElementById("status").textContent =
-            profile.verificationStatus;
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Unable to load account.");
-
-        window.location.href = "index.html";
-
-    }
-
+// FORMAT NUMBERS
+function formatNumber(number) {
+  return Number(number || 0).toLocaleString();
 }
 
+// LOAD SAVED BALANCE
+async function loadBalance() {
 
-// ===================================
-// LOGOUT
-// ===================================
+  try {
 
-document.getElementById("logoutButton").addEventListener(
-    "click",
-    async function() {
+    await getCurrentUser();
 
-        try {
+    const result = await getCryptoBalance();
 
-            await logoutUser();
+    document.getElementById("balance").textContent =
+      formatNumber(result.balance) + " CVC";
 
-            window.location.href = "index.html";
+    document.getElementById("totalMined").textContent =
+      formatNumber(result.totalMined) + " CVC";
 
-        } catch (error) {
+    document.getElementById("tapCount").textContent =
+      formatNumber(result.tapCount);
 
-            alert(error.message);
+    document.getElementById("puzzles").textContent =
+      formatNumber(result.puzzleCompleted);
 
-        }
+  } catch (error) {
+
+    console.error(error);
+
+    alert(error.message || "Unable to load your Crypto Vault account.");
+
+    location.href = "index.html";
+  }
+}
+
+// TAP TO EARN
+document.getElementById("tapBtn").onclick = async function() {
+
+  const button = this;
+  const message = document.getElementById("tapMessage");
+
+  button.disabled = true;
+
+  message.textContent = "Processing your reward...";
+
+  try {
+
+    await tapToEarn();
+
+    message.textContent = "+1 CVC successfully earned!";
+
+    await loadBalance();
+
+  } catch (error) {
+
+    message.textContent = error.message;
+
+  }
+
+  setTimeout(() => {
+    button.disabled = false;
+  }, 5000);
+
+};
+
+// DAILY PUZZLE
+document.getElementById("puzzleBtn").onclick = async function() {
+
+  const answer = document.getElementById("answer").value;
+
+  const message = document.getElementById("puzzleMessage");
+
+  if (answer === "") {
+
+    message.textContent = "Enter your answer first.";
+
+    return;
+  }
+
+  const button = this;
+
+  button.disabled = true;
+
+  message.textContent = "Checking answer...";
+
+  try {
+
+    await submitPuzzle(answer);
+
+    message.textContent = "+25 CVC successfully earned!";
+
+    document.getElementById("answer").value = "";
+
+    await loadBalance();
+
+  } catch (error) {
+
+    message.textContent = error.message;
+
+  }
+
+  button.disabled = false;
+
+};
+
+// SHARE WEBSITE
+document.getElementById("shareBtn").onclick = async function() {
+
+  const shareData = {
+    title: "Crypto Vault",
+    text: "Join me on Crypto Vault!",
+    url: location.origin
+  };
+
+  const message = document.getElementById("shareMessage");
+
+  try {
+
+    if (navigator.share) {
+
+      await navigator.share(shareData);
+
+      message.textContent = "Share link opened.";
+
+    } else {
+
+      await navigator.clipboard.writeText(shareData.url);
+
+      message.textContent = "Website link copied!";
 
     }
-);
 
+  } catch (error) {
 
-loadDashboard();
+    message.textContent = "Sharing cancelled.";
 
-</script>
+  }
 
-</body>
+};
 
+// LOGOUT
+document.getElementById("logoutBtn").onclick = async function() {
+
+  try {
+
+    await cryptoLogout();
+
+    location.href = "index.html";
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+
+};
+
+// INITIAL LOAD
+loadBalance();
+
+</script></body>
 </html>
