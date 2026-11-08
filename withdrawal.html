@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto Vault Withdrawal</title>
+<title>Crypto Vault Withdrawal</title><style>
+* { box-sizing: border-box; }
 
-<style>
 body {
   background: #07111f;
   color: white;
@@ -21,23 +20,55 @@ body {
   border-radius: 18px;
 }
 
-h2 {
-  color: #00e5a0;
-  margin-bottom: 20px;
-}
+h2 { color: #00e5a0; }
 
 label {
   display: block;
-  margin: 15px 0 8px;
+  margin: 18px 0 8px;
 }
 
-input, select {
+input {
   width: 100%;
   padding: 14px;
   border-radius: 9px;
   border: none;
   background: #20364e;
   color: white;
+  outline: none;
+}
+
+.wallet-box {
+  background: #20364e;
+  padding: 14px;
+  border-radius: 9px;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.wallet-box strong {
+  color: #00e5a0;
+}
+
+.balance-box {
+  background: #20364e;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.balance-box strong {
+  color: #00e5a0;
+  font-size: 20px;
+}
+
+.amount-row {
+  display: flex;
+  gap: 10px;
+}
+
+.amount-row input {
+  flex: 1;
+  min-width: 0;
 }
 
 button {
@@ -48,11 +79,23 @@ button {
   margin-top: 20px;
   background: #00d99a;
   font-weight: bold;
+  cursor: pointer;
+}
+
+.max-btn {
+  width: 75px;
+  margin-top: 0;
+  background: #176b58;
+  color: white;
 }
 
 .back {
   background: #263b54;
   color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
 }
 
 .note {
@@ -61,77 +104,206 @@ button {
   font-size: 13px;
   margin-top: 15px;
 }
-</style>
-</head>
 
-<body>
+#message {
+  margin-top: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
 
-<div class="container">
+.success { color: #00e5a0; }
+.error { color: #ff7777; }
+</style></head><body><div class="container"><h2>Withdraw to Wallet</h2><div class="balance-box">
+  <p>Available CVC Balance</p>
+  <strong id="balance">Loading...</strong>
+</div><label>Saved Wallet Address</label>
 
-<h2>Withdraw to Wallet</h2>
+<div class="wallet-box" id="walletAddress">
+  Loading...
+</div><label>Wallet Network</label>
 
-<p>Available balance: <strong id="balance">Loading...</strong></p>
+<div class="wallet-box">
+  <strong id="walletNetwork">Loading...</strong>
+</div><label>Withdrawal Amount (CVC)</label>
 
-<label>Choose cryptocurrency</label>
-<select id="currency">
-  <option value="BNB">BNB - BNB Smart Chain</option>
-  <option value="ETH">ETH - Ethereum Mainnet</option>
-</select>
-
-<label>Wallet address</label>
-<input
-  type="text"
-  id="wallet"
-  placeholder="Enter your receiving wallet address"
->
-
-<label>Amount (CVC)</label>
-<input
-  type="number"
-  id="amount"
-  placeholder="Enter CVC amount"
->
-
-<button id="submitBtn">SUBMIT WITHDRAWAL REQUEST</button>
-
-<p class="note">
-  Withdrawal requests are not yet connected to a live blockchain payout system.
-  Do not submit a request expecting an immediate cryptocurrency transfer.
-</p>
-
-<button class="back" onclick="location.href='crypto.html'">
+<div class="amount-row">
+  <input
+    type="number"
+    id="amount"
+    placeholder="Enter CVC amount"
+    min="0"
+    step="any"
+  >  <button type="button" class="max-btn" id="maxBtn">
+    MAX
+  </button>
+</div><button id="submitBtn">
+  SUBMIT WITHDRAWAL REQUEST
+</button><p class="note">
+  Your request will be saved for review. Submitting a request does not automatically transfer cryptocurrency.
+</p><button class="back" onclick="location.href='crypto.html'">
   BACK TO DASHBOARD
-</button>
+</button><p id="message"></p></div><script type="module">
 
-<p id="message"></p>
-
-</div>
-
-<script type="module">
 import {
-  cryptoAction
-} from "./appwrite.js";
+  Client,
+  Account,
+  Databases
+} from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm";
 
-async function loadBalance() {
+const client = new Client()
+  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
+  .setProject("69d1aaac0005506756e0");
+
+const account = new Account(client);
+const databases = new Databases(client);
+
+const DATABASE_ID = "69d1aaf5000f43c786be";
+const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
+
+// ADD YOUR NEW SUCCESS PAGE URL HERE LATER
+const SUCCESS_URL = "";
+
+let currentUser;
+let availableBalance = 0;
+
+const balanceElement = document.getElementById("balance");
+const amountInput = document.getElementById("amount");
+const submitBtn = document.getElementById("submitBtn");
+const maxBtn = document.getElementById("maxBtn");
+const message = document.getElementById("message");
+
+function showMessage(text, type = "error") {
+  message.textContent = text;
+  message.className = type;
+}
+
+function formatCVC(value) {
+  return Number(value || 0).toFixed(12);
+}
+
+// LOAD USER AND WALLET DETAILS
+async function loadData() {
   try {
-    const result = await cryptoAction("balance");
+    currentUser = await account.get();
 
-    document.getElementById("balance").textContent =
-      Number(result.balance).toLocaleString() + " CVC";
+    const profile = await databases.getDocument(
+      DATABASE_ID,
+      USERS_COLLECTION_ID,
+      currentUser.$id
+    );
+
+    availableBalance = Number(profile.coinBalance || 0);
+
+    balanceElement.textContent =
+      formatCVC(availableBalance) + " CVC";
+
+    document.getElementById("walletAddress").textContent =
+      profile.walletAddress || "No wallet address saved";
+
+    document.getElementById("walletNetwork").textContent =
+      profile.walletNetwork || "No network saved";
+
+    if (!profile.walletAddress || !profile.walletNetwork) {
+      submitBtn.disabled = true;
+      showMessage("Your wallet address or network is missing from your profile.");
+      return;
+    }
+
+    if (availableBalance <= 0) {
+      showMessage("You currently have no available balance.");
+    }
 
   } catch (error) {
-    alert(error.message);
-    location.href = "index.html";
+    console.error(error);
+    balanceElement.textContent = "Unavailable";
+    submitBtn.disabled = true;
+    showMessage("Unable to load account: " + error.message);
   }
 }
 
-document.getElementById("submitBtn").onclick = () => {
-  document.getElementById("message").textContent =
-    "Withdrawal requests will be enabled after the secure payout backend is configured.";
-};
+// MAX BUTTON
+maxBtn.addEventListener("click", () => {
+  if (availableBalance <= 0) {
+    showMessage("Your balance is zero.");
+    return;
+  }
 
-loadBalance();
-</script>
+  amountInput.value = availableBalance.toFixed(12);
+  showMessage("Maximum balance selected.", "success");
+});
 
-</body>
+// SAVE WITHDRAWAL REQUEST
+submitBtn.addEventListener("click", async () => {
+
+  const amount = Number(amountInput.value);
+
+  if (!currentUser) {
+    showMessage("Please log in again.");
+    return;
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showMessage("Enter a valid withdrawal amount.");
+    return;
+  }
+
+  if (amount > availableBalance) {
+    showMessage("Insufficient balance.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "Confirm withdrawal request?\n\n" +
+    "Amount: " + formatCVC(amount) + " CVC\n\n" +
+    "Your saved wallet address and network will be used."
+  );
+
+  if (!confirmed) return;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "SAVING...";
+
+  try {
+
+    await databases.updateDocument(
+      DATABASE_ID,
+      USERS_COLLECTION_ID,
+      currentUser.$id,
+      {
+        withdrawalAmount: amount,
+        withdrawalStatus: "Pending",
+        withdrawalRequestedAt: new Date().toISOString()
+      }
+    );
+
+    showMessage(
+      "Withdrawal request saved successfully!",
+      "success"
+    );
+
+    if (SUCCESS_URL.trim()) {
+      setTimeout(() => {
+        window.location.href = SUCCESS_URL;
+      }, 1000);
+    } else {
+      submitBtn.textContent = "REQUEST SAVED";
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      "Failed to save withdrawal request: " + error.message
+    );
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "SUBMIT WITHDRAWAL REQUEST";
+  }
+
+});
+
+loadData();
+
+</script></body>
 </html>
