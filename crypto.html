@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Crypto Vault Dashboard</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #0b0e11;
+    color: white;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+}
+
+header {
+    background: #15191e;
+    padding: 20px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    color: #f0b90b;
+    font-weight: bold;
+    font-size: 19px;
+}
+
+.logout {
+    background: #302a15;
+    color: #f0b90b;
+    border: 1px solid #f0b90b;
+    padding: 9px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 550px;
+    margin: 35px auto;
+    padding: 15px;
+}
+
+.card {
+    background: #15191e;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 25px;
+    margin-bottom: 10px;
+}
+
+.description {
+    color: #9299a3;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.profile-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #30363d;
+}
+
+.profile-label {
+    color: #9299a3;
+    font-size: 12px;
+    margin-bottom: 7px;
+}
+
+.profile-value {
+    font-size: 15px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.status {
+    display: inline-block;
+    background: #302a15;
+    color: #f0b90b;
+    padding: 7px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+footer {
+    text-align: center;
+    color: #727982;
+    padding: 25px;
+    font-size: 11px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">◆ CRYPTO VAULT</div>
+
+    <button class="logout" id="logoutButton">
+        Logout
+    </button>
+
+</header>
+
+
+<main class="container">
+
+    <section class="card">
+
+        <h1>Welcome, <span id="userName">User</span></h1>
+
+        <p class="description">
+            Your demonstration account information.
+        </p>
+
+        <div class="profile-item">
+
+            <div class="profile-label">Email Address</div>
+
+            <div class="profile-value" id="email">Loading...</div>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <div class="profile-label">Country</div>
+
+            <div class="profile-value" id="country">Loading...</div>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <div class="profile-label">Selected Wallet</div>
+
+            <div class="profile-value" id="wallet">Loading...</div>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <div class="profile-label">Wallet Usage</div>
+
+            <div class="profile-value" id="months">Loading...</div>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <div class="profile-label">Verification Method</div>
+
+            <div class="profile-value" id="method">Loading...</div>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <div class="profile-label">Account Status</div>
+
+            <div class="status" id="status">Loading...</div>
+
+        </div>
+
+    </section>
+
+
+    <section class="card">
+
+        <h2 style="margin-bottom:15px;">Account Information</h2>
+
+        <p style="color:#9299a3;font-size:13px;line-height:1.8;">
+
+            This is an independent demonstration dashboard.
+            No cryptocurrency wallet is connected and no
+            real identity verification has been performed.
+
+        </p>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    Independent Crypto Vault Demonstration.
+
+</footer>
+
+
+<script type="module">
+
+import {
+    getCurrentUser,
+    getUserProfile,
+    logoutUser
+} from "./appwrite.js";
+
+
+// ===================================
+// LOAD USER DASHBOARD
+// ===================================
+
+async function loadDashboard() {
+
+    try {
+
+        const user = await getCurrentUser();
+
+        if (!user) {
+
+            window.location.href = "index.html";
+
+            return;
+
+        }
+
+        const profile = await getUserProfile(user.$id);
+
+        if (!profile) {
+
+            window.location.href = "index.html";
+
+            return;
+
+        }
+
+        document.getElementById("userName").textContent =
+            profile.displayName;
+
+        document.getElementById("email").textContent =
+            profile.email;
+
+        document.getElementById("country").textContent =
+            profile.country;
+
+        document.getElementById("wallet").textContent =
+            profile.selectedWallet || "Not selected";
+
+        document.getElementById("months").textContent =
+            profile.walletUsageMonths + " months";
+
+        document.getElementById("method").textContent =
+            profile.verificationMethod;
+
+        document.getElementById("status").textContent =
+            profile.verificationStatus;
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Unable to load account.");
+
+        window.location.href = "index.html";
+
+    }
+
+}
+
+
+// ===================================
+// LOGOUT
+// ===================================
+
+document.getElementById("logoutButton").addEventListener(
+    "click",
+    async function() {
+
+        try {
+
+            await logoutUser();
+
+            window.location.href = "index.html";
+
+        } catch (error) {
+
+            alert(error.message);
+
+        }
+
+    }
+);
+
+
+loadDashboard();
+
+</script>
+
+</body>
+
+</html>
