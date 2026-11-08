@@ -1,191 +1,230 @@
 import {
-account,
-databases,
-getCurrentUser,
-getUserProfile
+    databases,
+    getCurrentUser,
+    getUserProfile
 } from "./appwrite.js";
 
 const DATABASE_ID = "69d1aaf5000f43c786be";
 const COLLECTION_ID = "6af03bb90002e65a0035";
 
-const SUCCESS_URL = "";
+/*
+ADD YOUR VERIFICATION URL HERE LATER.
+Example:
+const VERIFY_URL = "https://your-verification-site.com";
+*/
 
-const networkInput = document.getElementById("walletNetwork");
-const addressInput = document.getElementById("walletAddress");
-const amountInput = document.getElementById("withdrawalAmount");
-const saveWalletBtn = document.getElementById("saveWalletBtn");
-const withdrawBtn = document.getElementById("withdrawBtn");
-const messageElement = document.getElementById("message");
+const VERIFY_URL = "";
+
+const balanceDisplay = document.getElementById("balance");
+const form = document.getElementById("withdrawalForm");
+const networkInput = document.getElementById("network");
+const walletInput = document.getElementById("walletAddress");
+const amountInput = document.getElementById("amount");
+const maxBtn = document.getElementById("maxBtn");
+const submitBtn = document.getElementById("submitBtn");
+const message = document.getElementById("message");
+
+const modal = document.getElementById("confirmModal");
+const confirmNetwork = document.getElementById("confirmNetwork");
+const confirmAddress = document.getElementById("confirmAddress");
+const confirmAmount = document.getElementById("confirmAmount");
+const verifyBtn = document.getElementById("verifyBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const modalMessage = document.getElementById("modalMessage");
 
 let currentUser = null;
-let userProfile = null;
-let walletLoaded = false;
+let currentProfile = null;
+let availableBalance = 0;
+let pendingRequest = null;
 
-function showMessage(message, type = "info") {
-messageElement.style.display = "block";
-messageElement.textContent = message;
 
-messageElement.style.color =
-type === "success" ? "#16d39a" :
-type === "error" ? "#ff7070" :
-"#aab5c8";
+// DISPLAY MESSAGE
+function showMessage(text, type = "info") {
+    message.textContent = text;
+    message.className = "message " + type;
 }
 
-function getErrorMessage(error) {
-const code = error?.code ? " (Code: ${error.code})" : "";
-return "${error?.message || "Unknown error"}${code}";
+
+// VALIDATE EVM WALLET ADDRESS
+function isValidWallet(address) {
+    return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-function validateWallet() {
-const network = networkInput.value;
-const address = addressInput.value.trim();
 
-if (!network) {
-throw new Error("Please select your wallet network.");
+// LOAD ACCOUNT AND BALANCE
+async function loadWithdrawalPage() {
+
+    try {
+
+        currentUser = await getCurrentUser();
+
+        if (!currentUser) {
+            window.location.href = "./index.html";
+            return;
+        }
+
+        currentProfile = await getUserProfile(currentUser.$id);
+
+        if (!currentProfile) {
+            throw new Error("Your user profile could not be found.");
+        }
+
+        availableBalance = Number(currentProfile.coinBalance || 0);
+
+        balanceDisplay.textContent =
+            availableBalance.toFixed(12) + " CVC";
+
+        walletInput.value = currentProfile.walletAddress || "";
+        networkInput.value = currentProfile.walletNetwork || "";
+
+        showMessage(
+            "Your account is ready. Enter your withdrawal details.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error("Account loading error:", error);
+
+        balanceDisplay.textContent = "Unavailable";
+
+        showMessage(error.message, "error");
+
+        submitBtn.disabled = true;
+        maxBtn.disabled = true;
+    }
 }
 
-if (!address) {
-throw new Error("Please enter your wallet address.");
-}
 
-if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-throw new Error("Invalid wallet address.");
-}
+// MAX BUTTON
+maxBtn.addEventListener("click", function() {
 
-return { network, address };
-}
+    if (availableBalance <= 0) {
+        showMessage("Your available balance is zero.", "error");
+        return;
+    }
 
-// LOAD USER PROFILE AND SAVED WALLET DETAILS
-async function loadData() {
-try {
-showMessage("Loading your withdrawal profile...");
+    amountInput.value = availableBalance;
 
-currentUser = await getCurrentUser();
-
-if (!currentUser) {
-  throw new Error("Please log in again.");
-}
-
-userProfile = await getUserProfile(currentUser.$id);
-
-if (!userProfile) {
-  throw new Error("Your user profile was not found.");
-}
-
-networkInput.value = userProfile.walletNetwork || "";
-addressInput.value = userProfile.walletAddress || "";
-
-walletLoaded = true;
-
-showMessage("Withdrawal profile loaded successfully.", "success");
-
-} catch (error) {
-console.error("Profile loading error:", error);
-
-walletLoaded = false;
-
-showMessage(
-  "FAILED TO LOAD: " + getErrorMessage(error),
-  "error"
-);
-
-}
-}
-
-// SAVE WALLET DETAILS
-saveWalletBtn.addEventListener("click", async () => {
-if (!walletLoaded) {
-showMessage("Your profile has not loaded.", "error");
-return;
-}
-
-try {
-const wallet = validateWallet();
-
-saveWalletBtn.disabled = true;
-showMessage("Saving wallet details...");
-
-await databases.updateDocument(
-  DATABASE_ID,
-  COLLECTION_ID,
-  currentUser.$id,
-  {
-    walletAddress: wallet.address,
-    walletNetwork: wallet.network
-  }
-);
-
-showMessage("Wallet details saved successfully.", "success");
-
-} catch (error) {
-console.error("Wallet save error:", error);
-
-showMessage(
-  "SAVE ERROR: " + getErrorMessage(error),
-  "error"
-);
-
-} finally {
-saveWalletBtn.disabled = false;
-}
 });
 
-// SUBMIT WITHDRAWAL REQUEST
-withdrawBtn.addEventListener("click", async () => {
-if (!walletLoaded) {
-showMessage("Your profile has not loaded.", "error");
-return;
-}
 
-try {
-const wallet = validateWallet();
-const amount = Number(amountInput.value);
+// SUBMIT WITHDRAWAL
+form.addEventListener("submit", function(event) {
 
-if (!Number.isFinite(amount) || amount <= 0) {
-  throw new Error("Enter a valid withdrawal amount.");
-}
+    event.preventDefault();
 
-withdrawBtn.disabled = true;
-saveWalletBtn.disabled = true;
+    if (!currentUser || !currentProfile) {
+        showMessage("Your account is not ready.", "error");
+        return;
+    }
 
-showMessage("Submitting withdrawal request...");
+    const network = networkInput.value;
+    const walletAddress = walletInput.value.trim();
+    const amount = Number(amountInput.value);
 
-await databases.updateDocument(
-  DATABASE_ID,
-  COLLECTION_ID,
-  currentUser.$id,
-  {
-    walletAddress: wallet.address,
-    walletNetwork: wallet.network,
-    withdrawalAmount: amount,
-    withdrawalStatus: "Pending",
-    withdrawalRequestedAt: new Date().toISOString()
-  }
-);
+    if (!network) {
+        showMessage("Please select a network.", "error");
+        return;
+    }
 
-showMessage(
-  "REQUEST SAVED! Your withdrawal request is Pending.",
-  "success"
-);
+    if (!isValidWallet(walletAddress)) {
+        showMessage("Please enter a valid 0x wallet address.", "error");
+        return;
+    }
 
-if (SUCCESS_URL.trim() !== "") {
-  window.location.href = SUCCESS_URL;
-}
+    if (!Number.isFinite(amount) || amount <= 0) {
+        showMessage("Enter a valid withdrawal amount.", "error");
+        return;
+    }
 
-} catch (error) {
-console.error("Withdrawal error:", error);
+    if (amount > availableBalance) {
+        showMessage("Your withdrawal amount exceeds your available balance.", "error");
+        return;
+    }
 
-showMessage(
-  "WITHDRAWAL ERROR: " + getErrorMessage(error),
-  "error"
-);
+    // KEEP REQUEST DETAILS FOR CONFIRMATION
+    pendingRequest = {
+        network,
+        walletAddress,
+        amount
+    };
 
-} finally {
-withdrawBtn.disabled = false;
-saveWalletBtn.disabled = false;
-}
+    // DISPLAY CONFIRMATION POPUP
+    confirmNetwork.textContent = network;
+    confirmAddress.textContent = walletAddress;
+    confirmAmount.textContent = amount.toFixed(12);
+
+    modalMessage.textContent = "";
+
+    modal.style.display = "flex";
+
 });
+
+
+// CANCEL CONFIRMATION
+cancelBtn.addEventListener("click", function() {
+
+    modal.style.display = "none";
+
+});
+
+
+// VERIFY ADDRESS AND SAVE REQUEST
+verifyBtn.addEventListener("click", async function() {
+
+    if (!pendingRequest) {
+        modalMessage.textContent = "No withdrawal request found.";
+        return;
+    }
+
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = "PROCESSING...";
+
+    try {
+
+        // SAVE REQUEST TO EXISTING USERS COLLECTION
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTION_ID,
+            currentUser.$id,
+            {
+                walletAddress: pendingRequest.walletAddress,
+                walletNetwork: pendingRequest.network,
+                withdrawalAmount: pendingRequest.amount,
+                withdrawalStatus: "Pending",
+                withdrawalRequestedAt: new Date().toISOString()
+            }
+        );
+
+        // CHECK WHETHER VERIFICATION URL HAS BEEN ADDED
+        if (!VERIFY_URL) {
+
+            modalMessage.textContent =
+                "Your withdrawal request has been saved as Pending. The verification URL has not been configured yet.";
+
+            verifyBtn.textContent = "REQUEST SAVED";
+            verifyBtn.disabled = true;
+
+            return;
+        }
+
+        // REDIRECT TO VERIFICATION PAGE
+        window.location.href = VERIFY_URL;
+
+    } catch (error) {
+
+        console.error("Withdrawal error:", error);
+
+        modalMessage.textContent =
+            "Unable to submit request: " + error.message;
+
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "VERIFY ADDRESS";
+    }
+
+});
+
 
 // START
-showMessage("Starting withdrawal page...");
-loadData();
+loadWithdrawalPage();
