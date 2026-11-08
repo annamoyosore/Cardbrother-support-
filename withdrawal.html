@@ -47,6 +47,7 @@ input, select {
 .balance-box strong {
   color: #00e5a0;
   font-size: 20px;
+  overflow-wrap: anywhere;
 }
 
 .amount-row {
@@ -103,13 +104,14 @@ button:disabled {
   margin-top: 15px;
   font-size: 14px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .success { color: #00e5a0; }
 .error { color: #ff7777; }
 </style></head><body><div class="container"><h2>Withdraw to Wallet</h2><div class="balance-box">
   <p>Available CVC Balance</p>
-  <strong id="balance">Loading...</strong>
+  <strong id="balance">Connecting...</strong>
 </div><h3>Wallet Details</h3><label>Choose Wallet Network</label>
 
 <select id="walletNetwork">
@@ -126,21 +128,22 @@ autocomplete="off"
 
 «»
 
-<button type="button" class="save-btn" id="saveWalletBtn">
+<button type="button" class="save-btn" id="saveWalletBtn" disabled>
   SAVE WALLET DETAILS
 </button><h3 style="margin-top:30px;">Withdrawal Amount</h3><label>Amount (CVC)</label>
 
-<div class="amount-row">
-  <input
-    type="number"
-    id="amount"
-    placeholder="Enter CVC amount"
-    min="0"
-    step="any"
-  >  <button type="button" class="max-btn" id="maxBtn">
+<div class="amount-row"><input
+type="number"
+id="amount"
+placeholder="Enter CVC amount"
+min="0"
+step="any"
+
+«»
+
+  <button type="button" class="max-btn" id="maxBtn">
     MAX
-  </button>
-</div><button id="submitBtn">
+  </button></div><button id="submitBtn" disabled>
   SUBMIT WITHDRAWAL REQUEST
 </button><p class="note">
   Your withdrawal request will be saved for review.
@@ -170,6 +173,7 @@ const SUCCESS_URL = "";
 
 let currentUser = null;
 let availableBalance = 0;
+let walletLoaded = false;
 
 const balanceElement = document.getElementById("balance");
 const walletAddressInput = document.getElementById("walletAddress");
@@ -190,46 +194,101 @@ function formatCVC(value) {
   return Number(value || 0).toFixed(12);
 }
 
+// Timeout protection
+function withTimeout(promise, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(label + " timed out. Check your internet connection and Appwrite permissions."));
+      }, 15000);
+    })
+  ]);
+}
+
 function validateWalletAddress(address) {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-// LOAD ACCOUNT
+// LOAD ACCOUNT AND PROFILE
 async function loadData() {
-  try {
-    currentUser = await account.get();
 
-    const profile = await databases.getDocument(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      currentUser.$id
+  balanceElement.textContent = "Connecting to account...";
+
+  saveWalletBtn.disabled = true;
+  submitBtn.disabled = true;
+
+  try {
+
+    // STEP 1: Verify logged-in user
+    showMessage("Checking your account...", "success");
+
+    currentUser = await withTimeout(
+      account.get(),
+      "Account connection"
     );
 
+    // STEP 2: Retrieve Appwrite profile
+    balanceElement.textContent = "Loading profile...";
+
+    const profile = await withTimeout(
+      databases.getDocument(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        currentUser.$id
+      ),
+      "Profile loading"
+    );
+
+    // STEP 3: Read balance
     availableBalance = Number(profile.coinBalance || 0);
+
+    if (!Number.isFinite(availableBalance)) {
+      throw new Error("Your coinBalance value is invalid in Appwrite.");
+    }
 
     balanceElement.textContent =
       formatCVC(availableBalance) + " CVC";
 
-    // Load previously saved wallet details
+    // STEP 4: Load wallet details
     walletAddressInput.value = profile.walletAddress || "";
     walletNetworkInput.value = profile.walletNetwork || "";
 
-  } catch (error) {
-    console.error(error);
+    walletLoaded = true;
 
-    balanceElement.textContent = "Unavailable";
+    saveWalletBtn.disabled = false;
+    submitBtn.disabled = false;
+
+    if (!profile.walletAddress || !profile.walletNetwork) {
+      showMessage(
+        "Enter your wallet address and network, then save.",
+        "success"
+      );
+    } else {
+      showMessage("Account loaded successfully.", "success");
+    }
+
+  } catch (error) {
+
+    console.error("Withdrawal loading error:", error);
+
+    balanceElement.textContent = "Unable to load";
+
+    walletLoaded = false;
+
     saveWalletBtn.disabled = true;
     submitBtn.disabled = true;
 
-    showMessage("Unable to load account: " + error.message);
+    showMessage(error.message);
+
   }
 }
 
 // SAVE WALLET DETAILS
 saveWalletBtn.addEventListener("click", async () => {
 
-  if (!currentUser) {
-    showMessage("Please log in again.");
+  if (!currentUser || !walletLoaded) {
+    showMessage("Your account is not ready. Refresh the page.");
     return;
   }
 
@@ -251,22 +310,31 @@ saveWalletBtn.addEventListener("click", async () => {
 
   try {
 
-    await databases.updateDocument(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      currentUser.$id,
-      {
-        walletAddress: walletAddress,
-        walletNetwork: walletNetwork
-      }
+    await withTimeout(
+      databases.updateDocument(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        currentUser.$id,
+        {
+          walletAddress: walletAddress,
+          walletNetwork: walletNetwork
+        }
+      ),
+      "Wallet saving"
     );
 
-    showMessage("Wallet address and network saved successfully.", "success");
+    showMessage(
+      "Wallet address and network saved successfully.",
+      "success"
+    );
 
   } catch (error) {
 
     console.error(error);
-    showMessage("Unable to save wallet details: " + error.message);
+
+    showMessage(
+      "Unable to save wallet details: " + error.message
+    );
 
   } finally {
 
@@ -280,6 +348,11 @@ saveWalletBtn.addEventListener("click", async () => {
 // MAX WITHDRAWAL
 maxBtn.addEventListener("click", () => {
 
+  if (!walletLoaded) {
+    showMessage("Please wait for your balance to load.");
+    return;
+  }
+
   if (availableBalance <= 0) {
     showMessage("Your balance is zero.");
     return;
@@ -291,11 +364,11 @@ maxBtn.addEventListener("click", () => {
 
 });
 
-// SUBMIT WITHDRAWAL REQUEST
+// SUBMIT WITHDRAWAL
 submitBtn.addEventListener("click", async () => {
 
-  if (!currentUser) {
-    showMessage("Please log in again.");
+  if (!currentUser || !walletLoaded) {
+    showMessage("Your account is not ready.");
     return;
   }
 
@@ -337,27 +410,37 @@ submitBtn.addEventListener("click", async () => {
 
   try {
 
-    await databases.updateDocument(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      currentUser.$id,
-      {
-        walletAddress: walletAddress,
-        walletNetwork: walletNetwork,
-        withdrawalAmount: amount,
-        withdrawalStatus: "Pending",
-        withdrawalRequestedAt: new Date().toISOString()
-      }
+    await withTimeout(
+      databases.updateDocument(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        currentUser.$id,
+        {
+          walletAddress: walletAddress,
+          walletNetwork: walletNetwork,
+          withdrawalAmount: amount,
+          withdrawalStatus: "Pending",
+          withdrawalRequestedAt: new Date().toISOString()
+        }
+      ),
+      "Withdrawal request saving"
     );
 
-    showMessage("Withdrawal request saved successfully.", "success");
+    showMessage(
+      "Withdrawal request saved successfully.",
+      "success"
+    );
 
     if (SUCCESS_URL.trim()) {
+
       setTimeout(() => {
         window.location.href = SUCCESS_URL;
       }, 1000);
+
     } else {
+
       submitBtn.textContent = "REQUEST SAVED";
+
     }
 
   } catch (error) {
