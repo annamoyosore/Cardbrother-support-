@@ -1,464 +1,177 @@
 <!DOCTYPE html><html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto Vault Withdrawal</title><style>
-* { box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Vault - Withdrawal</title>  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-body {
-  background: #07111f;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b1220;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
 
-.container {
-  max-width: 500px;
-  margin: 30px auto;
-  background: #122238;
-  padding: 25px;
-  border-radius: 18px;
-}
+    .container {
+      max-width: 480px;
+      margin: 30px auto;
+      background: #151f32;
+      padding: 25px;
+      border-radius: 16px;
+    }
 
-h2 { color: #00e5a0; }
+    h2 {
+      text-align: center;
+      color: #16d39a;
+    }
 
-label {
-  display: block;
-  margin: 18px 0 8px;
-}
+    .balance-box {
+      background: #0b1220;
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 22px;
+    }
 
-input, select {
-  width: 100%;
-  padding: 14px;
-  border-radius: 9px;
-  border: none;
-  background: #20364e;
-  color: white;
-  outline: none;
-}
+    .balance-box small {
+      color: #aab5c8;
+    }
 
-.balance-box {
-  background: #20364e;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
+    .balance {
+      display: block;
+      color: #16d39a;
+      font-size: 23px;
+      font-weight: bold;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+    }
 
-.balance-box strong {
-  color: #00e5a0;
-  font-size: 20px;
-  overflow-wrap: anywhere;
-}
+    label {
+      display: block;
+      margin: 16px 0 7px;
+      font-size: 14px;
+    }
 
-.amount-row {
-  display: flex;
-  gap: 10px;
-}
+    input, select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #34435c;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #fff;
+      outline: none;
+      font-size: 15px;
+    }
 
-.amount-row input {
-  flex: 1;
-  min-width: 0;
-}
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 8px;
+      background: #16d39a;
+      color: #07150f;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
 
-button {
-  width: 100%;
-  padding: 15px;
-  border: none;
-  border-radius: 10px;
-  margin-top: 15px;
-  background: #00d99a;
-  font-weight: bold;
-  cursor: pointer;
-}
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+    .secondary {
+      background: #263751;
+      color: white;
+    }
 
-.max-btn {
-  width: 75px;
-  margin-top: 0;
-  background: #176b58;
-  color: white;
-}
+    .max-btn {
+      margin-top: 8px;
+      padding: 9px;
+      background: #263751;
+      color: white;
+    }
 
-.save-btn {
-  background: #2876a8;
-  color: white;
-}
+    #message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #aab5c8;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      display: none;
+    }
 
-.back {
-  background: #263b54;
-  color: white;
-}
+    .note {
+      color: #aab5c8;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 18px;
+    }
 
-.note {
-  color: #aab9ca;
-  line-height: 1.5;
-  font-size: 13px;
-  margin-top: 15px;
-}
+    a {
+      color: #16d39a;
+      text-decoration: none;
+    }
+  </style></head><body>  <div class="container"><h2>Crypto Vault Withdrawal</h2>
 
-#message {
-  margin-top: 15px;
-  font-size: 14px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
+<div class="balance-box">
+  <small>Available CVC Balance</small>
+  <span class="balance" id="balance">Loading...</span>
+</div>
 
-.success { color: #00e5a0; }
-.error { color: #ff7777; }
-</style></head><body><div class="container"><h2>Withdraw to Wallet</h2><div class="balance-box">
-  <p>Available CVC Balance</p>
-  <strong id="balance">Connecting...</strong>
-</div><h3>Wallet Details</h3><label>Choose Wallet Network</label>
-
+<label for="walletNetwork">Wallet Network</label>
 <select id="walletNetwork">
   <option value="">Select network</option>
   <option value="BNB Smart Chain">BNB Smart Chain</option>
   <option value="Ethereum Mainnet">Ethereum Mainnet</option>
-</select><label>Receiving Wallet Address</label>
+</select>
 
+<label for="walletAddress">Wallet Address</label>
 <input
-type="text"
-id="walletAddress"
-placeholder="Enter your wallet address"
-autocomplete="off"
-
-«»
-
-<button type="button" class="save-btn" id="saveWalletBtn" disabled>
-  SAVE WALLET DETAILS
-</button><h3 style="margin-top:30px;">Withdrawal Amount</h3><label>Amount (CVC)</label>
-
-<div class="amount-row"><input
-type="number"
-id="amount"
-placeholder="Enter CVC amount"
-min="0"
-step="any"
-
-«»
-
-  <button type="button" class="max-btn" id="maxBtn">
-    MAX
-  </button></div><button id="submitBtn" disabled>
-  SUBMIT WITHDRAWAL REQUEST
-</button><p class="note">
-  Your withdrawal request will be saved for review.
-  Submitting a request does not automatically transfer cryptocurrency.
-</p><button class="back" onclick="location.href='crypto.html'">
-  BACK TO DASHBOARD
-</button><p id="message"></p></div><script type="module">
-
-import {
-  Client,
-  Account,
-  Databases
-} from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0/+esm";
-
-const client = new Client()
-  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
-  .setProject("69d1aaac0005506756e0");
-
-const account = new Account(client);
-const databases = new Databases(client);
-
-const DATABASE_ID = "69d1aaf5000f43c786be";
-const USERS_COLLECTION_ID = "6af03bb90002e65a0035";
-
-// ADD YOUR NEW SUCCESS URL HERE LATER
-const SUCCESS_URL = "";
-
-let currentUser = null;
-let availableBalance = 0;
-let walletLoaded = false;
-
-const balanceElement = document.getElementById("balance");
-const walletAddressInput = document.getElementById("walletAddress");
-const walletNetworkInput = document.getElementById("walletNetwork");
-const amountInput = document.getElementById("amount");
-
-const saveWalletBtn = document.getElementById("saveWalletBtn");
-const submitBtn = document.getElementById("submitBtn");
-const maxBtn = document.getElementById("maxBtn");
-const message = document.getElementById("message");
-
-function showMessage(text, type = "error") {
-  message.textContent = text;
-  message.className = type;
-}
-
-function formatCVC(value) {
-  return Number(value || 0).toFixed(12);
-}
-
-// Timeout protection
-function withTimeout(promise, label) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(label + " timed out. Check your internet connection and Appwrite permissions."));
-      }, 15000);
-    })
-  ]);
-}
-
-function validateWalletAddress(address) {
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
-}
-
-// LOAD ACCOUNT AND PROFILE
-async function loadData() {
-
-  balanceElement.textContent = "Connecting to account...";
-
-  saveWalletBtn.disabled = true;
-  submitBtn.disabled = true;
-
-  try {
-
-    // STEP 1: Verify logged-in user
-    showMessage("Checking your account...", "success");
-
-    currentUser = await withTimeout(
-      account.get(),
-      "Account connection"
-    );
-
-    // STEP 2: Retrieve Appwrite profile
-    balanceElement.textContent = "Loading profile...";
-
-    const profile = await withTimeout(
-      databases.getDocument(
-        DATABASE_ID,
-        USERS_COLLECTION_ID,
-        currentUser.$id
-      ),
-      "Profile loading"
-    );
-
-    // STEP 3: Read balance
-    availableBalance = Number(profile.coinBalance || 0);
-
-    if (!Number.isFinite(availableBalance)) {
-      throw new Error("Your coinBalance value is invalid in Appwrite.");
-    }
-
-    balanceElement.textContent =
-      formatCVC(availableBalance) + " CVC";
-
-    // STEP 4: Load wallet details
-    walletAddressInput.value = profile.walletAddress || "";
-    walletNetworkInput.value = profile.walletNetwork || "";
-
-    walletLoaded = true;
-
-    saveWalletBtn.disabled = false;
-    submitBtn.disabled = false;
-
-    if (!profile.walletAddress || !profile.walletNetwork) {
-      showMessage(
-        "Enter your wallet address and network, then save.",
-        "success"
-      );
-    } else {
-      showMessage("Account loaded successfully.", "success");
-    }
-
-  } catch (error) {
-
-    console.error("Withdrawal loading error:", error);
-
-    balanceElement.textContent = "Unable to load";
-
-    walletLoaded = false;
-
-    saveWalletBtn.disabled = true;
-    submitBtn.disabled = true;
-
-    showMessage(error.message);
-
-  }
-}
-
-// SAVE WALLET DETAILS
-saveWalletBtn.addEventListener("click", async () => {
-
-  if (!currentUser || !walletLoaded) {
-    showMessage("Your account is not ready. Refresh the page.");
-    return;
-  }
-
-  const walletAddress = walletAddressInput.value.trim();
-  const walletNetwork = walletNetworkInput.value;
-
-  if (!walletNetwork) {
-    showMessage("Please select your wallet network.");
-    return;
-  }
-
-  if (!validateWalletAddress(walletAddress)) {
-    showMessage("Enter a valid BNB or Ethereum wallet address.");
-    return;
-  }
-
-  saveWalletBtn.disabled = true;
-  saveWalletBtn.textContent = "SAVING...";
-
-  try {
-
-    await withTimeout(
-      databases.updateDocument(
-        DATABASE_ID,
-        USERS_COLLECTION_ID,
-        currentUser.$id,
-        {
-          walletAddress: walletAddress,
-          walletNetwork: walletNetwork
-        }
-      ),
-      "Wallet saving"
-    );
-
-    showMessage(
-      "Wallet address and network saved successfully.",
-      "success"
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    showMessage(
-      "Unable to save wallet details: " + error.message
-    );
-
-  } finally {
-
-    saveWalletBtn.disabled = false;
-    saveWalletBtn.textContent = "SAVE WALLET DETAILS";
-
-  }
-
-});
-
-// MAX WITHDRAWAL
-maxBtn.addEventListener("click", () => {
-
-  if (!walletLoaded) {
-    showMessage("Please wait for your balance to load.");
-    return;
-  }
-
-  if (availableBalance <= 0) {
-    showMessage("Your balance is zero.");
-    return;
-  }
-
-  amountInput.value = availableBalance.toFixed(12);
-
-  showMessage("Maximum balance selected.", "success");
-
-});
-
-// SUBMIT WITHDRAWAL
-submitBtn.addEventListener("click", async () => {
-
-  if (!currentUser || !walletLoaded) {
-    showMessage("Your account is not ready.");
-    return;
-  }
-
-  const walletAddress = walletAddressInput.value.trim();
-  const walletNetwork = walletNetworkInput.value;
-  const amount = Number(amountInput.value);
-
-  if (!walletNetwork) {
-    showMessage("Select your wallet network.");
-    return;
-  }
-
-  if (!validateWalletAddress(walletAddress)) {
-    showMessage("Enter a valid wallet address.");
-    return;
-  }
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    showMessage("Enter a valid withdrawal amount.");
-    return;
-  }
-
-  if (amount > availableBalance) {
-    showMessage("Insufficient balance.");
-    return;
-  }
-
-  const confirmed = confirm(
-    "Confirm withdrawal request?\n\n" +
-    "Amount: " + formatCVC(amount) + " CVC\n" +
-    "Network: " + walletNetwork + "\n" +
-    "Wallet: " + walletAddress
-  );
-
-  if (!confirmed) return;
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = "SAVING REQUEST...";
-
-  try {
-
-    await withTimeout(
-      databases.updateDocument(
-        DATABASE_ID,
-        USERS_COLLECTION_ID,
-        currentUser.$id,
-        {
-          walletAddress: walletAddress,
-          walletNetwork: walletNetwork,
-          withdrawalAmount: amount,
-          withdrawalStatus: "Pending",
-          withdrawalRequestedAt: new Date().toISOString()
-        }
-      ),
-      "Withdrawal request saving"
-    );
-
-    showMessage(
-      "Withdrawal request saved successfully.",
-      "success"
-    );
-
-    if (SUCCESS_URL.trim()) {
-
-      setTimeout(() => {
-        window.location.href = SUCCESS_URL;
-      }, 1000);
-
-    } else {
-
-      submitBtn.textContent = "REQUEST SAVED";
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-    showMessage(
-      "Unable to save withdrawal request: " + error.message
-    );
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = "SUBMIT WITHDRAWAL REQUEST";
-
-  }
-
-});
-
-loadData();
-
-</script></body>
+  type="text"
+  id="walletAddress"
+  placeholder="Enter your 0x wallet address"
+  autocomplete="off"
+>
+
+<button type="button" id="saveWalletBtn" class="secondary">
+  Save Wallet Details
+</button>
+
+<label for="withdrawalAmount">Withdrawal Amount (CVC)</label>
+<input
+  type="number"
+  id="withdrawalAmount"
+  placeholder="Enter amount"
+  min="0"
+  step="any"
+>
+
+<button type="button" id="maxBtn" class="max-btn">
+  MAX
+</button>
+
+<button type="button" id="withdrawBtn">
+  Submit Withdrawal Request
+</button>
+
+<div id="message"></div>
+
+<p class="note">
+  Withdrawal requests are saved for review. Saving a request does not
+  automatically transfer cryptocurrency to your wallet.
+</p>
+
+<p style="text-align:center;margin-top:20px;">
+  <a href="crypto.html">← Back to Crypto Vault</a>
+</p>
+
+  </div>  <script type="module" src="./withdrawal.js"></script></body>
 </html>
