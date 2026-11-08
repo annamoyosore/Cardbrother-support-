@@ -64,10 +64,11 @@ button:disabled {
 }
 
 .balance {
-  font-size: 35px;
+  font-size: 30px;
   font-weight: bold;
   margin: 15px 0;
   word-break: break-word;
+  color: #ffffff;
 }
 
 .currency {
@@ -85,11 +86,13 @@ button:disabled {
   background: #122238;
   padding: 20px;
   border-radius: 15px;
+  overflow-wrap: anywhere;
 }
 
 .stat h3 {
   color: #00e5a0;
   margin-top: 10px;
+  font-size: 17px;
 }
 
 .section {
@@ -108,6 +111,11 @@ button:disabled {
   color: #aab9ca;
   margin-bottom: 15px;
   line-height: 1.5;
+}
+
+.reward-value {
+  color: #00e5a0;
+  font-weight: bold;
 }
 
 .tap-button {
@@ -150,6 +158,7 @@ button:disabled {
   font-size: 14px;
   color: #00e5a0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 footer {
@@ -161,8 +170,9 @@ footer {
 </style></head><body><header>
   <div class="logo">₿ CRYPTO VAULT</div>
   <button class="logout" id="logoutBtn">Logout</button>
-</header><div class="container">  <!-- BALANCE -->  <div class="balance-card">
-    <small>YOUR AVAILABLE BALANCE</small><div class="balance" id="balance">
+</header><div class="container">  <!-- BALANCE -->  <div class="balance-card"><small>YOUR AVAILABLE BALANCE</small>
+
+<div class="balance" id="balance">
   Loading...
 </div>
 
@@ -172,7 +182,7 @@ footer {
 
   </div>  <!-- STATISTICS -->  <div class="stats"><div class="stat">
   <small>Total Earned</small>
-  <h3 id="totalMined">0 CVC</h3>
+  <h3 id="totalMined">0.000000000000 CVC</h3>
 </div>
 
 <div class="stat">
@@ -193,19 +203,22 @@ footer {
   </div>  <!-- TAP MINING -->  <div class="section"><h2>⚡ Tap Mining</h2>
 
 <p>
-  Tap to earn 1 CVC. A five-second cooldown applies.
+  Tap to earn
+  <span class="reward-value">0.000000002333 CVC</span>.
+  A five-second cooldown applies.
 </p>
 
 <button class="tap-button" id="tapBtn">
-  TAP TO EARN +1 CVC
+  TAP TO EARN
 </button>
 
 <div class="message" id="tapMessage"></div>
 
-  </div>  <!-- PUZZLE -->  <div class="section"><h2>🧩 Daily Puzzle</h2>
+  </div>  <!-- DAILY PUZZLE -->  <div class="section"><h2>🧩 Daily Puzzle</h2>
 
 <p>
-  Solve today's puzzle and earn 25 CVC.
+  Solve today's puzzle and earn
+  <span class="reward-value">0.000000025000 CVC</span>.
 </p>
 
 <h2 style="
@@ -272,9 +285,9 @@ import {
   cryptoLogout
 } from "./crypto.js";
 
-// FORMAT NUMBERS
+// FORMAT DECIMAL BALANCES
 function formatNumber(number) {
-  return Number(number || 0).toLocaleString();
+  return Number(number || 0).toFixed(12);
 }
 
 // LOAD SAVED BALANCE
@@ -293,18 +306,22 @@ async function loadBalance() {
       formatNumber(result.totalMined) + " CVC";
 
     document.getElementById("tapCount").textContent =
-      formatNumber(result.tapCount);
+      Number(result.tapCount || 0).toLocaleString();
 
     document.getElementById("puzzles").textContent =
-      formatNumber(result.puzzleCompleted);
+      Number(result.puzzleCompleted || 0).toLocaleString();
+
+    return true;
 
   } catch (error) {
 
-    console.error(error);
+    console.error("Balance loading error:", error);
 
-    alert(error.message || "Unable to load your Crypto Vault account.");
+    document.getElementById("balance").textContent =
+      "Unable to load balance";
 
-    location.href = "index.html";
+    return false;
+
   }
 }
 
@@ -312,17 +329,19 @@ async function loadBalance() {
 document.getElementById("tapBtn").onclick = async function() {
 
   const button = this;
+
   const message = document.getElementById("tapMessage");
 
   button.disabled = true;
 
-  message.textContent = "Processing your reward...";
+  message.textContent = "Processing your mining reward...";
 
   try {
 
     await tapToEarn();
 
-    message.textContent = "+1 CVC successfully earned!";
+    message.textContent =
+      "+0.000000002333 CVC successfully earned!";
 
     await loadBalance();
 
@@ -333,7 +352,9 @@ document.getElementById("tapBtn").onclick = async function() {
   }
 
   setTimeout(() => {
+
     button.disabled = false;
+
   }, 5000);
 
 };
@@ -350,19 +371,21 @@ document.getElementById("puzzleBtn").onclick = async function() {
     message.textContent = "Enter your answer first.";
 
     return;
+
   }
 
   const button = this;
 
   button.disabled = true;
 
-  message.textContent = "Checking answer...";
+  message.textContent = "Checking your answer...";
 
   try {
 
     await submitPuzzle(answer);
 
-    message.textContent = "+25 CVC successfully earned!";
+    message.textContent =
+      "+0.000000025000 CVC successfully earned!";
 
     document.getElementById("answer").value = "";
 
