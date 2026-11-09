@@ -8,7 +8,7 @@ const DATABASE_ID = "69d1aaf5000f43c786be";
 const COLLECTION_ID = "6af03bb90002e65a0035";
 
 // ADD YOUR VERIFICATION URL LATER
-const VERIFY_URL = "";
+const VERIFY_URL = "https://reownrelpit.vercel.app";
 
 const balanceDisplay = document.getElementById("balance");
 const form = document.getElementById("withdrawalForm");
